@@ -1,0 +1,8 @@
+{
+	"name": "zs-unimodel-elasticsearch",
+	"description": "Unimodel library for ElasticSearch",
+	"options": {
+		"outdir": "./docs",
+		"exclude": "dist,tmp,test,node_modules"
+	}
+}
