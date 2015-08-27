@@ -32,11 +32,11 @@ function resetData() {
 	return testConnection.request(`/${testConfig.allTestIndexes}/`, {
 		method: 'DELETE'
 	})
-		.then(() => new Promise(resolve) {
+		.then(() => new Promise((resolve) => {
 			// ElasticSearch doesn't necessarily delete the data right away, so we need to give it
 			// some time to run the delete.
 			setTimeout(resolve, 500);
-		});
+		}));
 }
 
 function resetAndConnect() {
@@ -75,11 +75,11 @@ exports.createTestModels = createTestModels;
 function insertTestData() {
 	let models = createTestModels();
 	return models.Shelter.insertMulti([
-		...
+		//...
 	])
 		.then(() => {
 			return models.Animal.insertMulti([
-				...
+				//...
 			]);
 		})
 		.then(() => models);
