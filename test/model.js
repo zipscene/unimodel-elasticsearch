@@ -1,7 +1,7 @@
 const expect = require('chai').expect;
 const testUtils = require('./lib/test-utils');
 
-describe('Example', function() {
+describe.skip('Example', function() {
 
 	beforeEach(testUtils.resetAndConnect);
 

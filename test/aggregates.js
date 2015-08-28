@@ -1,7 +1,7 @@
 const expect = require('chai').expect;
 const testUtils = require('./lib/test-utils');
 
-describe('Aggregates', function() {
+describe.skip('Aggregates', function() {
 
 	describe('Aggregate Conversion', function() {
 
