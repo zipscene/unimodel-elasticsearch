@@ -1,8 +1,8 @@
 const { createSchema, map, or, Mixed } = require('zs-common-schema');
 const { expect } = require('chai');
-const ElasticsearchMappingValidationError = require('xerror');
 
 const { schemaToMapping } = require('../lib/schema-to-mapping');
+const { ElasticsearchMappingValidationError } = require('../lib');
 
 describe('schema-to-mapping', function() {
 
