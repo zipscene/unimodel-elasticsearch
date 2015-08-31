@@ -1,6 +1,6 @@
 const { createSchema, map, or, Mixed } = require('zs-common-schema');
 const { expect } = require('chai');
-const XError = require('xerror');
+const ElasticsearchMappingValidationError = require('xerror');
 
 const { schemaToMapping } = require('../lib/schema-to-mapping');
 
@@ -64,7 +64,10 @@ describe('schema-to-mapping', function() {
 		it('should fail to if root of schema is not an object', function() {
 			let schema = createSchema([ Number ]);
 			expect(() => schemaToMapping(schema))
-				.to.throw(XError, /Schema root must be type "object" to be converted to ElasticSearch Mapping/);
+				.to.throw(
+					ElasticsearchMappingValidationError,
+					/Schema root must be type "object" to be converted to ElasticSearch Mapping/
+				);
 		});
 
 		it('should fail if unknown schema type is given', function() {
@@ -73,7 +76,10 @@ describe('schema-to-mapping', function() {
 			});
 			schema.getData().properties.foo.type = 'invalid!';
 			expect(() => schemaToMapping(schema))
-				.to.throw(XError, /Cannot convert unknown schema type \(invalid!\) to ElasticSearch Mapping/);
+				.to.throw(
+					ElasticsearchMappingValidationError,
+					/Cannot convert unknown schema type \(invalid!\) to ElasticSearch Mapping/
+				);
 		});
 
 	});
@@ -133,7 +139,7 @@ describe('schema-to-mapping', function() {
 				}
 			});
 			expect(() => schemaToMapping(schema))
-				.to.throw(XError, /Analyzed value at "foo" is missing analyzer value/);
+				.to.throw(ElasticsearchMappingValidationError, /Analyzed value at "foo" is missing analyzer value/);
 		});
 
 	});
@@ -217,7 +223,10 @@ describe('schema-to-mapping', function() {
 				}
 			});
 			expect(() => schemaToMapping(schema))
-				.to.throw(XError, /Number type at "bar" is an invalid ElasticSearch Number Type/);
+				.to.throw(
+					ElasticsearchMappingValidationError,
+					/Number type at "bar" is an invalid ElasticSearch Number Type/
+				);
 		});
 
 		it('should fail to convert number schema types with invalid precisionStep', function() {
@@ -228,7 +237,10 @@ describe('schema-to-mapping', function() {
 				}
 			});
 			expect(() => schemaToMapping(schema))
-				.to.throw(XError, /Number precision step at "bar" must be an integer or a parsable string/);
+				.to.throw(
+					ElasticsearchMappingValidationError,
+					/Number precision step at "bar" must be an integer or a parsable string/
+				);
 		});
 
 	});
@@ -444,86 +456,24 @@ describe('schema-to-mapping', function() {
 
 	describe('type: map', function() {
 
-		it('should convert map schema types', function() {
+		it('should should always throw an error', function() {
 			let schema = createSchema({
-				foo: map({ index: true }, String)
+				foo: map({}, Number)
 			});
-			let mapping = schemaToMapping(schema);
-			let expected = {
-				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
-				properties: {
-					foo: {
-						type: 'object',
-						dynamic: true
-					}
-				}
-			};
-			expect(mapping).to.deep.equals(expected);
-		});
-
-		it('should convert unindexed map scheam types', function() {
-			let schema = createSchema({
-				foo: map({}, String)
-			});
-			let mapping = schemaToMapping(schema);
-			let expected = {
-				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
-				properties: {
-					foo: {
-						type: 'object',
-						dynamic: false,
-						enabled: false
-					}
-				}
-			};
-			expect(mapping).to.deep.equals(expected);
+			expect(() => schemaToMapping(schema))
+				.to.throw(ElasticsearchMappingValidationError, /Invalid schema type provided: map/);
 		});
 
 	});
 
 	describe('type: or', function() {
 
-		it('should convert or schema types', function() {
-			let schema = createSchema({
-				foo: or({ index: true }, String, Number)
-			});
-			let mapping = schemaToMapping(schema);
-			let expected = {
-				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
-				properties: {
-					foo: {
-						type: 'object',
-						dynamic: true
-					}
-				}
-			};
-			expect(mapping).to.deep.equals(expected);
-		});
-
-		it('should convert unindexed or scheam types', function() {
+		it('should should always throw an error', function() {
 			let schema = createSchema({
 				foo: or({}, String, Number)
 			});
-			let mapping = schemaToMapping(schema);
-			let expected = {
-				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
-				properties: {
-					foo: {
-						type: 'object',
-						dynamic: false,
-						enabled: false
-					}
-				}
-			};
-			expect(mapping).to.deep.equals(expected);
+			expect(() => schemaToMapping(schema))
+				.to.throw(ElasticsearchMappingValidationError, /Invalid schema type provided: or/);
 		});
 
 	});
@@ -595,7 +545,7 @@ describe('schema-to-mapping', function() {
 				properties: {
 					foo: {
 						type: 'string',
-						index: undefined,
+						index: 'no',
 						null_value: undefined, //eslint-disable-line camelcase
 						fields: {
 							standard: {
@@ -656,7 +606,10 @@ describe('schema-to-mapping', function() {
 				{ field: 'foo', index: true },
 				{ field: 'foo', index: 'analyzed', analyzer: 'standard' },
 				{ field: 'ignored', index: false }
-			])).to.throw(XError, /Multiple extra schemas tried to register as the default schema for "foo"/);
+			])).to.throw(
+				ElasticsearchMappingValidationError,
+				/Multiple extra schemas tried to register as the default schema for "foo"/
+			);
 		});
 
 		it('should fail if multiple extra indexes try to use the same name', function() {
@@ -670,7 +623,24 @@ describe('schema-to-mapping', function() {
 				{ field: 'foo', index: true, name: 'named' },
 				{ field: 'foo', index: 'analyzed', analyzer: 'standard', name: 'named' },
 				{ field: 'ignored', index: false }
-			])).to.throw(XError, /Value mapping cannot have multiple subfields with the same name \(named\)/);
+			])).to.throw(
+				ElasticsearchMappingValidationError,
+				/Value mapping cannot have multiple subfields with the same name \(named\)/
+			);
+		});
+
+		it('should fail if extra index is not applied to a value type', function() {
+			let schema = createSchema({
+				foo: {
+					bar: String
+				}
+			});
+			expect(() => schemaToMapping(schema, [
+				{ field: 'foo', index: true }
+			])).to.throw(
+				ElasticsearchMappingValidationError,
+				/Cannot apply extra index to a non-"value" schema type/
+			);
 		});
 
 	});
