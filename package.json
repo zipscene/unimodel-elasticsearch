@@ -17,6 +17,7 @@
   "dependencies": {
     "babel-runtime": "5.8.20",
     "crisphooks": "^2.0.0",
+    "elasticsearch": "^8.0.1",
     "inheritz": "^1.2.0",
     "lodash": "^3.10.1",
     "pasync": "^1.4.0",

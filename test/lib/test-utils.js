@@ -2,7 +2,7 @@ const ElasticsearchConnection = require('../../lib').ElasticsearchConnection;
 const ElasticsearchModel = require('../../lib').ElasticsearchModel;
 
 const testConfig = {
-	url: 'http://localhost:9200',
+	host: 'http://localhost:9200',
 	indexConfigs: {
 		'uetest_*': {
 			shards: 16
@@ -21,7 +21,7 @@ function connect() {
 	if (testConnection) {
 		testConnection.close();
 	}
-	testConnection = new ElasticsearchConnection(testConfig.url, testConfig.indexConfigs);
+	testConnection = new ElasticsearchConnection(testConfig.host, testConfig.indexConfigs);
 	return testConnection;
 }
 
