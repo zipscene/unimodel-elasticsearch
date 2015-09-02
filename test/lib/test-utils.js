@@ -16,6 +16,7 @@ let testConnection;
 function getConnection() {
 	return testConnection;
 }
+exports.getConnection = getConnection;
 
 function connect() {
 	if (testConnection) {
