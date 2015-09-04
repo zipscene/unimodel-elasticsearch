@@ -64,17 +64,17 @@ function createTestModels() {
 			description: { type: String, index: true }
 		}, 'uetest_animals', testConnection),
 
-		ShelteredAnimal: new ElasticsearchModel('Animal', {
+		ShelteredAnimal: new ElasticsearchModel('ShelteredAnimal', {
 			animalId: { type: String, index: true, id: true, key: true },
 			name: { type: String, index: true, key: true },
 			sex: { type: String, enum: [ 'male', 'female', 'unknown' ] },
 			description: { type: String, index: true },
 			found: { type: Date, index: true }
-		}, 'uetest_shelter_animals', testConnection, { parentType: 'Shelter' }),
+		}, 'uetest_shelters', testConnection, { parentType: 'Shelter' }),
 
 		Shelter: new ElasticsearchModel('Shelter', {
-			shelterId: { type: String, index: true },
-			name: { type: String }
+			shelterId: { type: String, index: true, id: true, key: true },
+			name: { type: String, key: true }
 		}, 'uetest_shelters', testConnection)
 
 	};
