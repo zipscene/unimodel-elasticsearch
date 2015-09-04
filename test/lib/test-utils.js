@@ -1,3 +1,5 @@
+const XError = require('xerror');
+
 const ElasticsearchConnection = require('../../lib').ElasticsearchConnection;
 const ElasticsearchModel = require('../../lib').ElasticsearchModel;
 
@@ -23,16 +25,19 @@ function connect() {
 		testConnection.close();
 	}
 	testConnection = new ElasticsearchConnection(testConfig.host, testConfig.indexConfigs);
-	return testConnection;
+	return testConnection.connectionWaiter.promise;
 }
 
 function resetData() {
 	if (!testConnection) {
 		return Promise.resolve();
 	}
-	return testConnection.request(`/${testConfig.allTestIndexes}/`, {
-		method: 'DELETE'
-	})
+	return testConnection.getClient()
+		.then((client) => client.indices.delete({ index: testConfig.allTestIndexes }))
+		.catch((err) => {
+			if (err.code === XError.NOT_FOUND) { return Promise.resolve(); }
+			return Promise.reject(err);
+		})
 		.then(() => new Promise((resolve) => {
 			// ElasticSearch doesn't necessarily delete the data right away, so we need to give it
 			// some time to run the delete.
@@ -42,7 +47,7 @@ function resetData() {
 
 function resetAndConnect() {
 	return resetData()
-		.then(connect);
+		.then(connect).then(resetData);
 }
 
 exports.resetAndConnect = resetAndConnect;
@@ -53,16 +58,24 @@ function createTestModels() {
 	let models = {
 
 		Animal: new ElasticsearchModel('Animal', {
-			animalId: { type: String, index: true },
-			name: { type: String, index: true },
+			animalId: { type: String, index: true, id: true, key: true },
+			name: { type: String, index: true, key: true },
 			sex: { type: String, enum: [ 'male', 'female', 'unknown' ] },
 			description: { type: String, index: true }
-		}, 'uetest_animals', { parentType: 'Shelter' }),
+		}, 'uetest_animals', testConnection),
+
+		ShelteredAnimal: new ElasticsearchModel('Animal', {
+			animalId: { type: String, index: true, id: true, key: true },
+			name: { type: String, index: true, key: true },
+			sex: { type: String, enum: [ 'male', 'female', 'unknown' ] },
+			description: { type: String, index: true },
+			found: { type: Date, index: true }
+		}, 'uetest_shelter_animals', testConnection, { parentType: 'Shelter' }),
 
 		Shelter: new ElasticsearchModel('Shelter', {
 			shelterId: { type: String, index: true },
 			name: { type: String }
-		}, 'uetest_shelters')
+		}, 'uetest_shelters', testConnection)
 
 	};
 
