@@ -9,18 +9,15 @@ const { ElasticsearchDocument } = require('../lib');
 describe('ElasticsearchDocument', function() {
 
 	let models, dog;
-	before(function() {
-		return testUtils.resetAndConnect()
-			.then(() => {
-				models = testUtils.createTestModels();
-				dog = models.Animal.create({
-					animalId: 'dog-charles-barkley-male',
-					name: 'Charles Barkley',
-					sex: 'male',
-					description: 'a little asshole.'
-				});
-			});
-	});
+	before(() => testUtils.resetAndConnect().then(() => {
+		models = testUtils.createTestModels();
+		dog = models.Animal.create({
+			animalId: 'dog-charles-barkley-male',
+			name: 'Charles Barkley',
+			sex: 'male',
+			description: 'a little asshole.'
+		});
+	}));
 
 	it('should be able to save itself to the database and check itself using #fromESData', function() {
 		return dog.save()
