@@ -28,8 +28,6 @@ describe('schema-to-mapping', function() {
 
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					lol: {
 						type: 'object',
@@ -93,8 +91,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					foo: {
 						type: 'string',
@@ -117,8 +113,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					foo: {
 						type: 'string',
@@ -153,8 +147,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					bar: {
 						type: 'double',
@@ -177,8 +169,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					bar: {
 						type: 'integer',
@@ -201,8 +191,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					bar: {
 						type: 'double',
@@ -254,8 +242,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					bar: {
 						type: 'boolean',
@@ -278,8 +264,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					bar: {
 						type: 'date',
@@ -302,8 +286,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					bar: {
 						type: 'date',
@@ -330,8 +312,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					foo: {
 						type: 'geo_point',
@@ -351,8 +331,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					foo: {
 						type: 'double',
@@ -375,8 +353,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					foo: {
 						type: 'geo_point',
@@ -403,8 +379,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					foo: {
 						type: 'object',
@@ -439,8 +413,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					foo: {
 						type: 'string',
@@ -490,8 +462,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					foo: {
 						type: 'object',
@@ -509,8 +479,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					foo: {
 						type: 'object',
@@ -540,8 +508,6 @@ describe('schema-to-mapping', function() {
 			]);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					foo: {
 						type: 'string',
@@ -577,8 +543,6 @@ describe('schema-to-mapping', function() {
 			]);
 			let expected = {
 				_all: { enabled: false },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					foo: {
 						type: 'string',
@@ -659,8 +623,6 @@ describe('schema-to-mapping', function() {
 			let expected = {
 				_all: { enabled: false },
 				_id: { path: 'foo' },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					foo: {
 						type: 'string',
@@ -681,8 +643,6 @@ describe('schema-to-mapping', function() {
 			let mapping = schemaToMapping(schema, [], { includeAllField: true });
 			let expected = {
 				_all: { enabled: true },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					foo: {
 						type: 'string',
@@ -704,8 +664,6 @@ describe('schema-to-mapping', function() {
 			let expected = {
 				_all: { enabled: false },
 				_parent: { type: 'Foobear' },
-				type: 'object',
-				dynamic: false,
 				properties: {
 					foo: {
 						type: 'string',
