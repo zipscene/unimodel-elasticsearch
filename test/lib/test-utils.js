@@ -8,10 +8,18 @@ const testConfig = {
 	indexConfigs: {
 		'uetest_*': {
 			shards: 16
+		},
+		'uitest_what': {
+			shards: 5,
+			replicas: 2
 		}
 	},
 	allTestIndexes: 'uetest_*'
 };
+function getConfig() {
+	return testConfig;
+}
+exports.getConfig = getConfig;
 
 let testConnection;
 
@@ -47,7 +55,9 @@ function resetData() {
 
 function resetAndConnect() {
 	return resetData()
-		.then(connect).then(resetData);
+		.then(connect)
+		.then(resetData)
+		.then(getConnection);
 }
 
 exports.resetAndConnect = resetAndConnect;
