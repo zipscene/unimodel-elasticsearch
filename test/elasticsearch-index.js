@@ -37,7 +37,7 @@ const EX_ALIAS = {
 	}
 };
 
-describe('ElasticsearchIndex', function() {
+describe.skip('ElasticsearchIndex', function() {
 
 	let dogIndex;
 	before(() => testUtils.resetAndConnect().then(() => {

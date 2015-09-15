@@ -17,7 +17,7 @@ function makePerson(initialize = true, keys) {
 	return Person;
 }
 
-describe('ElasticsearchModel', function() {
+describe.skip('ElasticsearchModel', function() {
 
 	let models;
 	before(() => testUtils.resetAndConnect().then(() => {

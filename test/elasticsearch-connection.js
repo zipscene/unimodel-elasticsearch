@@ -2,7 +2,7 @@ const { expect } = require('chai');
 
 const testUtils = require('./lib/test-utils');
 
-describe('ElasticsearchConnection', function() {
+describe.skip('ElasticsearchConnection', function() {
 	let connPromise = testUtils.resetAndConnect();
 
 	describe('request', function() {

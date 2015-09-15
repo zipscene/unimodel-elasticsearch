@@ -10,7 +10,7 @@ function makeIndexManager() {
 	return new ElasticsearchIndexManager(testUtils.getConnection(), testUtils.getConfig().indexConfigs);
 }
 
-describe('ElasticsearchIndexManager', function() {
+describe.skip('ElasticsearchIndexManager', function() {
 
 	before(testUtils.resetAndConnect);
 
