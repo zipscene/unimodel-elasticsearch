@@ -72,7 +72,7 @@ function createTestModels() {
 			name: { type: String, index: true, key: true },
 			sex: { type: String, enum: [ 'male', 'female', 'unknown' ] },
 			description: { type: String, index: true },
-			loc: { type: 'geopoint', index: '2dsphere' },
+			loc: { type: 'geojson', index: true },
 			beds: {
 				type: 'array',
 				nested: true,

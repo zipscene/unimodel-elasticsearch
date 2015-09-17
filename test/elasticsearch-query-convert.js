@@ -312,7 +312,7 @@ describe('query-convert', function() {
 			});
 		});
 
-		it.skip('$elemMatch', function() {
+		it('$elemMatch', function() {
 			let query = createQuery({
 				beds: { $elemMatch: {
 					bedId: 'couch'
@@ -321,24 +321,7 @@ describe('query-convert', function() {
 			expect(queryConvert(query, models.Animal)).to.deep.equal({
 				nested: {
 					path: 'beds',
-					filter: { bedId: 'couch' }
-				}
-			});
-		});
-
-		it.skip('$near legacy', function() {
-			let query = createQuery({
-				loc: {
-					$near: {
-						$geometry: [ 0.5, 1.3 ],
-						$maxDistance: 5
-					}
-				}
-			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
-				'geo_distance': {
-					distance: '' + Math.floor(5 * 6371000) + 'm',
-					loc: [ 0.5, 1.3 ]
+					filter: { term: { bedId: 'couch' } }
 				}
 			});
 		});
