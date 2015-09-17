@@ -1,59 +1,136 @@
 const { expect } = require('chai');
-const commonQuery = require('zs-common-query');
+const { createQuery } = require('zs-common-query');
 
-const { queryConvert } = require('../lib/elasticsearch-query-convert');
+const { elasticsearchQueryConvert: queryConvert } = require('../lib/elasticsearch-query-convert');
 const testUtils = require('./lib/test-utils');
 
 describe('query-convert', function() {
 
+	let models;
+	before(() => testUtils.resetAndConnect().then(() => {
+		models = testUtils.createTestModels();
+	}));
+
 	describe('query expressions', function() {
 
+		it('should convert an empty query', function() {
+			let query = createQuery({});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({ 'match_all': {} });
+		});
+
+		it('should convert an exact match', function() {
+			let query = createQuery({ animalId: 'charles-barkley-dog-male' });
+			expect(queryConvert(query, models.Animal))
+				.to.deep.equal({ term: { animalId: 'charles-barkley-dog-male' } });
+		});
+
 		it('$and', function() {
+			let query = createQuery({
+				$and: [
+					{ animalId: 'charles-barkley-dog-male' },
+					{ animalId: 'baloo-dog-male' }
+				]
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				bool: { must: [
+					{ term: { animalId: 'charles-barkley-dog-male' } },
+					{ term: { animalId: 'baloo-dog-male' } }
+				] }
+			});
 		});
 
 		it('$nor', function() {
+			let query = createQuery({
+				$nor: [
+					{ animalId: 'charles-barkley-dog-male' },
+					{ animalId: 'baloo-dog-male' }
+				]
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				bool: { 'must_not': [
+					{ term: { animalId: 'charles-barkley-dog-male' } },
+					{ term: { animalId: 'baloo-dog-male' } }
+				] }
+			});
 		});
 
-		it('$or', function() {
+		it('$or single', function() {
+			let query = createQuery({
+				$or: [
+					{ animalId: 'charles-barkley-dog-male' },
+					{ animalId: 'baloo-dog-male' }
+				]
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				bool: { should: [
+					{ term: { animalId: 'charles-barkley-dog-male' } },
+					{ term: { animalId: 'baloo-dog-male' } }
+				] }
+			});
 		});
 
-		it('$child', function() {
+		it('$or multiple', function() {
+			let query = createQuery({
+				$and: [
+					{ $or: [
+						{ animalId: 'charles-barkley-dog-male' }
+					] },
+					{ $or: [
+						{ animalId: 'baloo-dog-male' }
+					] }
+				]
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				bool: { must: [
+					{ bool: { should: [
+						{ term: { animalId: 'charles-barkley-dog-male' } }
+					] } },
+					{ bool: { should: [
+						{ term: { animalId: 'baloo-dog-male' } }
+					] } }
+				] }
+			});
 		});
 
-		it('$parent', function() {
+		it.skip('$child', function() {
+			let query = createQuery({
+				$child: {
+					ShelteredAnimal: {
+						animalId: 'charles-barkley-dog-male'
+					}
+				}
+			});
+			expect(queryConvert(query, models.Shelter)).to.deep.equal({
+				bool: { must: [
+					{ 'has_child': {
+						type: 'ShelteredAnimal',
+						filter: { bool: { term: {
+							animalId: 'charles-barkley-dog-male'
+						} } }
+					} }
+				] }
+			});
 		});
 
-		it('$child with minChildren', function() {
+		it.skip('$parent', function() {
 		});
 
-		it('$child with maxChildren', function() {
+		it.skip('$child with minChildren', function() {
 		});
 
-		it('should convert an empty query', function() {
+		it.skip('$child with maxChildren', function() {
 		});
 
-		it('should convert a single andFilter into an exact match', function() {
+		it.skip('should support a complex combination', function() {
 		});
 
-		it('should convert a single orFilterSet into a should', function() {
+		it.skip('should fail $child/$parent if invalid minChildren/maxChildren is given', function() {
 		});
 
-		it('should convert multiple orFilterSets into multiple bool shoulds', function() {
+		it.skip('should fail $child/$parent if unknown Child/Parent is given', function() {
 		});
 
-		it('should support a complex combination', function() {
-		});
-
-		it('should fail $child/$parent if invalid minChildren/maxChildren is given', function() {
-		});
-
-		it('should fail $child/$parent if unknown Child/Parent is given', function() {
-		});
-
-		it('should bubble $child/$parent errros', function() {
-		});
-
-		it('should bubble operator expression errors', function() {
+		it.skip('should bubble $child/$parent errros', function() {
 		});
 
 	});
@@ -61,72 +138,229 @@ describe('query-convert', function() {
 	describe('operators expressions', function() {
 
 		it('$text', function() {
+			let query = createQuery({
+				description: {
+					$text: 'dog'
+				}
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				query: { match: {
+					description: {
+						query: 'dog',
+						operator: 'and'
+					}
+				} }
+			});
 		});
 
 		it('$wildcard', function() {
+			let query = createQuery({
+				description: {
+					$wildcard: 'dog*'
+				}
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				regexp: {
+					description: '^dog.*$'
+				}
+			});
 		});
 
 		it('$not', function() {
+			let query = createQuery({
+				description: { $not: { $wildcard: 'dog' } }
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				bool: { 'must_not': {
+					regexp: { description: '^dog$' }
+				} }
+			});
+		});
+
+		it('$not mutli', function() {
+			let query = createQuery({
+				description: { $not: {
+					$wildcard: 'dog',
+					$text: 'dog'
+				} }
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				bool: { 'must_not': [
+					{ regexp: { description: '^dog$' } },
+					{ query: { match: { description: { query: 'dog', operator: 'and' } } } }
+				] }
+			});
 		});
 
 		it('$exists: true', function() {
+			let query = createQuery({
+				animalId: { $exists: true }
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				exists: 'animalId'
+			});
 		});
 
 		it('$exists: false', function() {
+			let query = createQuery({
+				animalId: { $exists: false }
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				missing: 'animalId'
+			});
 		});
 
 		it('$in', function() {
+			let query = createQuery({
+				animalId: { $in: [ 'charles', 'barkley', 'baloo' ] }
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				terms: {
+					animalId: [ 'charles', 'barkley', 'baloo' ]
+				}
+			});
 		});
 
-		it('$all', function() {
+		it.skip('$all', function() {
+			let query = createQuery({
+				animalId: { $all: [ 'charles', 'barkley', 'baloo' ] }
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				bool: { must: [
+					{ term: { animalId: 'charles' } },
+					{ term: { animalId: 'barkley' } },
+					{ term: { animalId: 'baloo' } }
+				] }
+			});
 		});
 
 		it('$regex', function() {
+			let query = createQuery({
+				description: {
+					$regex: 'dog'
+				}
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				regexp: {
+					description: 'dog'
+				}
+			});
 		});
 
 		it('$gt', function() {
+			let query = createQuery({
+				animalId: { $gt: 'dog' }
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				range: {
+					animalId: {
+						gt: 'dog'
+					}
+				}
+			});
 		});
 
 		it('$gte', function() {
+			let query = createQuery({
+				animalId: { $gte: 'dog' }
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				range: {
+					animalId: {
+						gte: 'dog'
+					}
+				}
+			});
 		});
 
 		it('$lt', function() {
+			let query = createQuery({
+				animalId: { $lt: 'dog' }
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				range: {
+					animalId: {
+						lt: 'dog'
+					}
+				}
+			});
 		});
 
 		it('$lte', function() {
+			let query = createQuery({
+				animalId: { $lte: 'dog' }
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				range: {
+					animalId: {
+						lte: 'dog'
+					}
+				}
+			});
 		});
 
 		it('$nin', function() {
+			let query = createQuery({
+				animalId: { $nin: [ 'charles', 'barkley', 'baloo' ] }
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				bool: { 'must_not': [
+					{ term: { animalId: 'charles' } },
+					{ term: { animalId: 'barkley' } },
+					{ term: { animalId: 'baloo' } }
+				] }
+			});
 		});
 
-		it('$elemMatch', function() {
+		it.skip('$elemMatch', function() {
+			let query = createQuery({
+				beds: { $elemMatch: {
+					bedId: 'couch'
+				} }
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				nested: {
+					path: 'beds',
+					filter: { bedId: 'couch' }
+				}
+			});
 		});
 
-		it('$near legacy', function() {
+		it.skip('$near legacy', function() {
+			let query = createQuery({
+				loc: {
+					$near: {
+						$geometry: [ 0.5, 1.3 ],
+						$maxDistance: 5
+					}
+				}
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				'geo_distance': {
+					distance: '' + Math.floor(5 * 6371000) + 'm',
+					loc: [ 0.5, 1.3 ]
+				}
+			});
 		});
 
-		it('$near GeoJSON', function() {
-		});
-
-		it('should fail on unknown expressions', function() {
-		});
-
-		it('should fail on unindexed fields', function() {
-		});
-
-		it('should fail $text for non analyzed fields', function() {
-		});
-
-		it('should bubble $elemMatch nested failures', function() {
-		});
-
-		it('should fail $elemMatch if schema is not nested', function() {
-		});
-
-		it('should fail $near if invalid query type is given', function() {
-		});
-
-		it('should fail $near if no maxDistance is given', function() {
+		it.skip('$near GeoJSON', function() {
+			let query = createQuery({
+				loc: {
+					$near: {
+						$geometry: {
+							type: 'Point',
+							coordinates: [ 0.5, 1.3 ]
+						},
+						$maxDistance: 5
+					}
+				}
+			});
+			expect(queryConvert(query, models.Animal)).to.deep.equal({
+				'geo_distance': {
+					distance: '' + 5 + 'm',
+					loc: [ 0.5, 1.3 ]
+				}
+			});
 		});
 
 	});

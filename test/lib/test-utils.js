@@ -71,7 +71,16 @@ function createTestModels() {
 			animalId: { type: String, index: true, id: true, key: true },
 			name: { type: String, index: true, key: true },
 			sex: { type: String, enum: [ 'male', 'female', 'unknown' ] },
-			description: { type: String, index: true }
+			description: { type: String, index: true },
+			loc: { type: 'geopoint', index: '2dsphere' },
+			beds: {
+				type: 'array',
+				nested: true,
+				index: true,
+				elements: {
+					bedId: { type: String, index: true }
+				}
+			}
 		}, 'uetest_animals', testConnection),
 
 		ShelteredAnimal: new ElasticsearchModel('ShelteredAnimal', {
