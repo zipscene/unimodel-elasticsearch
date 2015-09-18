@@ -37,7 +37,7 @@ const EX_ALIAS = {
 	}
 };
 
-describe.skip('ElasticsearchIndex', function() {
+describe('ElasticsearchIndex', function() {
 
 	let dogIndex;
 	before(() => testUtils.resetAndConnect().then(() => {
@@ -99,8 +99,10 @@ describe.skip('ElasticsearchIndex', function() {
 		});
 
 		it('should initialize an existing index with warmers', function() {
+			this.timeout(3000);
 			let index = makeIndex();
-			return index.indexWaiter.promise
+			return new Promise((resolve) => setTimeout(resolve, 1000))
+				.then(() => index.indexWaiter.promise)
 				.then(() => {
 					let existingIndex = makeIndex({
 						warmers: {

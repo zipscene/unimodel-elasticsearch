@@ -72,7 +72,10 @@ function createTestModels() {
 			name: { type: String, index: true, key: true },
 			sex: { type: String, enum: [ 'male', 'female', 'unknown' ] },
 			description: { type: String, index: true },
-			loc: { type: 'geojson', index: true },
+			loc: {
+				type: 'geopoint',
+				index: true
+			},
 			beds: {
 				type: 'array',
 				nested: true,
@@ -99,6 +102,11 @@ function createTestModels() {
 	};
 
 	models.Animal.index('name', { index: 'analyzed', analyzer: 'english', name: 'englishKeywords' });
+
+	let es = require('../../lib/index');
+	es.model('Animal', models.Animal);
+	es.model('Shelter', models.Shelter);
+	es.model('ShelteredAnimal', models.ShelteredAnimal);
 
 	return models;
 }

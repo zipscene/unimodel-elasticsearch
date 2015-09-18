@@ -5,7 +5,7 @@ const XError = require('xerror');
 
 const { ElasticsearchError } = require('../lib');
 
-describe.skip('ElasticsearchError', function() {
+describe('ElasticsearchError', function() {
 
 	it('should parse HTTP status codes into proper XError codes', function() {
 		let err = ElasticsearchError.fromESError('409', 'DocumentAlreadyExistsException');

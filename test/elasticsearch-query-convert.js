@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { createQuery } = require('zs-common-query');
+const { createQuery, QueryValidationError } = require('zs-common-query');
 
 const { elasticsearchQueryConvert: queryConvert } = require('../lib/elasticsearch-query-convert');
 const testUtils = require('./lib/test-utils');
@@ -7,9 +7,11 @@ const testUtils = require('./lib/test-utils');
 describe('query-convert', function() {
 
 	let models;
-	before(() => testUtils.resetAndConnect().then(() => {
-		models = testUtils.createTestModels();
-	}));
+	before(() => testUtils.resetAndConnect()
+		.then(() => new Promise((resolve) => setTimeout(resolve, 100)))
+		.then(() => {
+			models = testUtils.createTestModels();
+		}));
 
 	describe('query expressions', function() {
 
@@ -92,7 +94,7 @@ describe('query-convert', function() {
 			});
 		});
 
-		it.skip('$child', function() {
+		it('$child', function() {
 			let query = createQuery({
 				$child: {
 					ShelteredAnimal: {
@@ -101,36 +103,89 @@ describe('query-convert', function() {
 				}
 			});
 			expect(queryConvert(query, models.Shelter)).to.deep.equal({
-				bool: { must: [
-					{ 'has_child': {
-						type: 'ShelteredAnimal',
-						filter: { bool: { term: {
-							animalId: 'charles-barkley-dog-male'
-						} } }
+				'has_child': {
+					type: 'ShelteredAnimal',
+					filter: { term: {
+						animalId: 'charles-barkley-dog-male'
 					} }
-				] }
+				}
 			});
 		});
 
-		it.skip('$parent', function() {
+		it('$parent', function() {
+			let query = createQuery({
+				$parent: {
+					Shelter: {
+						shelterId: 'opes-farm'
+					}
+				}
+			});
+			expect(queryConvert(query, models.ShelteredAnimal)).to.deep.equal({
+				'has_parent': {
+					type: 'Shelter',
+					filter: { term: {
+						shelterId: 'opes-farm'
+					} }
+				}
+			});
 		});
 
-		it.skip('$child with minChildren', function() {
+		it('$child with minChildren', function() {
+			let query = createQuery({
+				$child: {
+					$minChildren: 5,
+					ShelteredAnimal: {
+						animalId: 'charles-barkley-dog-male'
+					}
+				}
+			});
+			expect(queryConvert(query, models.Shelter)).to.deep.equal({
+				'has_child': {
+					type: 'ShelteredAnimal',
+					min_children: 5, //eslint-disable-line camelcase
+					filter: { term: {
+						animalId: 'charles-barkley-dog-male'
+					} }
+				}
+			});
 		});
 
-		it.skip('$child with maxChildren', function() {
+		it('$child with maxChildren', function() {
+			let query = createQuery({
+				$child: {
+					$maxChildren: 6,
+					ShelteredAnimal: {
+						animalId: 'charles-barkley-dog-male'
+					}
+				}
+			});
+			expect(queryConvert(query, models.Shelter)).to.deep.equal({
+				'has_child': {
+					type: 'ShelteredAnimal',
+					max_children: 6, //eslint-disable-line camelcase
+					filter: { term: {
+						animalId: 'charles-barkley-dog-male'
+					} }
+				}
+			});
 		});
 
-		it.skip('should support a complex combination', function() {
+		it('should fail $child/$parent if invalid minChildren/maxChildren is given', function() {
+			let query = createQuery({
+				$child: {
+					$maxChildren: 1,
+					$minChildren: 5,
+					ShelteredAnimal: {
+						animalId: 'charles-barkley-dog-male'
+					}
+				}
+			});
+			expect(() => queryConvert(query, models.Shelter))
+				.to.throw(QueryValidationError, 'value of $minChildren must not be greater than value of $maxChildren');
 		});
 
-		it.skip('should fail $child/$parent if invalid minChildren/maxChildren is given', function() {
-		});
-
-		it.skip('should fail $child/$parent if unknown Child/Parent is given', function() {
-		});
-
-		it.skip('should bubble $child/$parent errros', function() {
+		it.skip('should bubble $child/$parent errors', function() {
+			//TODO: need to figure out proper traversal in order to accomplish this
 		});
 
 	});
@@ -222,6 +277,7 @@ describe('query-convert', function() {
 		});
 
 		it.skip('$all', function() {
+			//TODO: waiting on zs-common-query to suppor the $all operator
 			let query = createQuery({
 				animalId: { $all: [ 'charles', 'barkley', 'baloo' ] }
 			});
@@ -326,7 +382,7 @@ describe('query-convert', function() {
 			});
 		});
 
-		it.skip('$near GeoJSON', function() {
+		it('$near GeoJSON', function() {
 			let query = createQuery({
 				loc: {
 					$near: {

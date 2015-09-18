@@ -4,7 +4,7 @@ const { expect } = require('chai');
 const { schemaToMapping } = require('../lib/schema-to-mapping');
 const { ElasticsearchMappingValidationError } = require('../lib');
 
-describe.skip('schema-to-mapping', function() {
+describe('schema-to-mapping', function() {
 
 	describe('general', function() {
 

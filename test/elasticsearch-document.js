@@ -6,7 +6,7 @@ const XError = require('xerror');
 const testUtils = require('./lib/test-utils');
 const { ElasticsearchDocument } = require('../lib');
 
-describe.skip('ElasticsearchDocument', function() {
+describe('ElasticsearchDocument', function() {
 
 	let models, dog;
 	before(() => testUtils.resetAndConnect().then(() => {
