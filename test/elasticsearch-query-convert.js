@@ -270,8 +270,7 @@ describe('query-convert', function() {
 			});
 		});
 
-		it.skip('$all', function() {
-			//TODO: waiting on zs-common-query to suppor the $all operator
+		it('$all', function() {
 			let query = createQuery({
 				animalId: { $all: [ 'charles', 'barkley', 'baloo' ] }
 			});
