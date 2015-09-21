@@ -1,14 +1,14 @@
 const { expect } = require('chai');
-const { createQuery, QueryValidationError } = require('zs-common-query');
+const { QueryValidationError } = require('zs-common-query');
 
+const { createQuery } = require('../lib/common-query');
 const { elasticsearchQueryConvert: queryConvert } = require('../lib/elasticsearch-query-convert');
 const testUtils = require('./lib/test-utils');
 
-describe('query-convert', function() {
+describe.only('query-convert', function() {
 
 	let models;
 	before(() => testUtils.resetAndConnect()
-		.then(() => new Promise((resolve) => setTimeout(resolve, 100)))
 		.then(() => {
 			models = testUtils.createTestModels();
 		}));
@@ -170,22 +170,16 @@ describe('query-convert', function() {
 			});
 		});
 
-		it('should fail $child/$parent if invalid minChildren/maxChildren is given', function() {
+		it('should bubble $child/$parent errors', function() {
 			let query = createQuery({
 				$child: {
-					$maxChildren: 1,
-					$minChildren: 5,
 					ShelteredAnimal: {
-						animalId: 'charles-barkley-dog-male'
+						bedId: 'this-is-not-the-bed-youre-looking-for'
 					}
 				}
 			});
 			expect(() => queryConvert(query, models.Shelter))
-				.to.throw(QueryValidationError, 'value of $minChildren must not be greater than value of $maxChildren');
-		});
-
-		it.skip('should bubble $child/$parent errors', function() {
-			//TODO: need to figure out proper traversal in order to accomplish this
+				.to.throw(QueryValidationError, 'Could not find field bedId in schema');
 		});
 
 	});
