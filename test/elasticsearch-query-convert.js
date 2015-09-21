@@ -5,7 +5,7 @@ const { createQuery } = require('../lib/common-query');
 const { elasticsearchQueryConvert: queryConvert } = require('../lib/elasticsearch-query-convert');
 const testUtils = require('./lib/test-utils');
 
-describe.only('query-convert', function() {
+describe('query-convert', function() {
 
 	let models;
 	before(() => testUtils.resetAndConnect()

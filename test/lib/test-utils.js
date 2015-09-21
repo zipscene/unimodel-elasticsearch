@@ -91,7 +91,8 @@ function createTestModels() {
 			name: { type: String, index: true, key: true },
 			sex: { type: String, enum: [ 'male', 'female', 'unknown' ] },
 			description: { type: String, index: true },
-			found: { type: Date, index: true }
+			found: { type: Date, index: true },
+			age: Number
 		}, 'uetest_shelters', testConnection, { parentType: 'Shelter' }),
 
 		Shelter: new ElasticsearchModel('Shelter', {
