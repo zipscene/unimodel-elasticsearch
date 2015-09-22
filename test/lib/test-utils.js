@@ -71,7 +71,19 @@ function createTestModels() {
 			animalId: { type: String, index: true, id: true, key: true },
 			name: { type: String, index: true, key: true },
 			sex: { type: String, enum: [ 'male', 'female', 'unknown' ] },
-			description: { type: String, index: true }
+			description: { type: String, index: true },
+			loc: {
+				type: 'geopoint',
+				index: true
+			},
+			beds: {
+				type: 'array',
+				nested: true,
+				index: true,
+				elements: {
+					bedId: { type: String, index: true }
+				}
+			}
 		}, 'uetest_animals', testConnection),
 
 		ShelteredAnimal: new ElasticsearchModel('ShelteredAnimal', {
@@ -79,7 +91,8 @@ function createTestModels() {
 			name: { type: String, index: true, key: true },
 			sex: { type: String, enum: [ 'male', 'female', 'unknown' ] },
 			description: { type: String, index: true },
-			found: { type: Date, index: true }
+			found: { type: Date, index: true },
+			age: Number
 		}, 'uetest_shelters', testConnection, { parentType: 'Shelter' }),
 
 		Shelter: new ElasticsearchModel('Shelter', {
@@ -90,6 +103,11 @@ function createTestModels() {
 	};
 
 	models.Animal.index('name', { index: 'analyzed', analyzer: 'english', name: 'englishKeywords' });
+
+	let es = require('../../lib/index');
+	es.model('Animal', models.Animal);
+	es.model('Shelter', models.Shelter);
+	es.model('ShelteredAnimal', models.ShelteredAnimal);
 
 	return models;
 }

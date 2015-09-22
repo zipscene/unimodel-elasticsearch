@@ -23,6 +23,7 @@
     "lodash": "^3.10.1",
     "pasync": "^1.4.0",
     "xerror": "^1.0.0",
+    "zs-common-query": "^1.5.0",
     "zs-common-schema": "^1.4.0",
     "zs-objtools": "^1.2.0",
     "zstreams": "^3.2.2"

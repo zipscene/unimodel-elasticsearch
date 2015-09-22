@@ -99,8 +99,10 @@ describe('ElasticsearchIndex', function() {
 		});
 
 		it('should initialize an existing index with warmers', function() {
+			this.timeout(3000);
 			let index = makeIndex();
-			return index.indexWaiter.promise
+			return new Promise((resolve) => setTimeout(resolve, 1000))
+				.then(() => index.indexWaiter.promise)
 				.then(() => {
 					let existingIndex = makeIndex({
 						warmers: {
