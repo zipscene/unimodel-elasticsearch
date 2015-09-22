@@ -3,9 +3,10 @@ chai.use(require('chai-as-promised'));
 const { expect } = chai;
 const XError = require('xerror');
 const { createSchema } = require('zs-common-schema');
+const { QueryValidationError } = require('zs-common-query');
 
 const testUtils = require('./lib/test-utils');
-const { ElasticsearchModel, ElasticsearchIndex } = require('../lib');
+const { ElasticsearchModel, ElasticsearchIndex, ElasticsearchDocument } = require('../lib');
 
 let idxItr = 0;
 function makePerson(initialize = true, keys) {
@@ -147,8 +148,167 @@ describe('ElasticsearchModel', function() {
 
 	});
 
+	describe('#find', function() {
+
+		before(function() {
+			let charles = models.Animal.create({
+				animalId: 'dog-charles-barkley-male',
+				name: 'Charles Barkley',
+				isDog: true,
+				sex: 'male',
+				description: 'A little asshole.'
+			});
+
+			let baloo = models.Animal.create({
+				animalId: 'opes-farm-dog-baloo',
+				name: 'Baloo',
+				isDog: true,
+				sex: 'male',
+				description: 'What is a data dog, anyway?'
+			});
+
+			let ein = models.Animal.create({
+				animalId: 'data-dog-ein',
+				name: 'Ein',
+				isDog: false,
+				sex: 'female',
+				description: 'A little asshole.'
+			});
+
+			return Promise.all([
+				charles.save({ consistency: 'quorum', refresh: true }),
+				baloo.save({ consistency: 'quorum', refresh: true }),
+				ein.save({ consistency: 'quorum', refresh: true })
+			]);
+		});
+
+		it('should find all 3 documents', function() {
+			return models.Animal.find({})
+				.then((docs) => {
+					expect(docs).to.be.instanceof(Array);
+					expect(docs).to.have.length(3);
+					for (let animal of docs) {
+						expect(animal).to.be.instanceof(ElasticsearchDocument);
+					}
+				});
+		});
+
+		it('should find male documents', function() {
+			return models.Animal.find({
+				isDog: true
+			}).then((docs) => {
+				expect(docs).to.be.instanceof(Array);
+				expect(docs).to.have.length(2);
+				for (let animal of docs) {
+					expect(animal).to.be.instanceof(ElasticsearchDocument);
+					expect(animal.getData().isDog).to.be.true;
+				}
+			});
+		});
+
+		it('should fail to normalize bad queries', function() {
+			expect(() => models.Animal.find({ sex: { $what: { $what: '$what' } } }))
+				.to.throw(QueryValidationError, 'Unrecognized expression operator: $what');
+		});
+		it('should fail to convert bad queries', function() {
+			expect(() => models.Animal.find({ sex: 'male' }))
+				.to.throw(QueryValidationError, 'Field is not indexed: sex');
+		});
+
+		describe('options', function() {
+
+			it('skip', function() {
+				return models.Animal.find({}, { skip: 1 })
+					.then((docs) => {
+						expect(docs).to.be.instanceof(Array);
+						expect(docs).to.have.length(2);
+						for (let animal of docs) {
+							expect(animal).to.be.instanceof(ElasticsearchDocument);
+						}
+					});
+			});
+
+			it('limit', function() {
+				return models.Animal.find({}, { limit: 1 })
+					.then((docs) => {
+						expect(docs).to.be.instanceof(Array);
+						expect(docs).to.have.length(1);
+						for (let animal of docs) {
+							expect(animal).to.be.instanceof(ElasticsearchDocument);
+						}
+					});
+			});
+
+			it('fields', function() {
+				return models.Animal.find({}, { fields: { isDog: 0 } })
+					.then((docs) => {
+						expect(docs).to.be.instanceof(Array);
+						expect(docs).to.have.length(3);
+						for (let animal of docs) {
+							expect(animal.getData().animalId).to.exist;
+							expect(animal.getData().isDog).to.not.exist;
+						}
+					});
+			});
+
+			it('total', function() {
+				return models.Animal.find({}, { limit: 2, total: true })
+					.then((docs) => {
+						expect(docs).to.be.instanceof(Array);
+						expect(docs).to.have.length(2);
+						expect(docs.total).to.equal(3);
+					});
+			});
+
+			it('sort', function() {
+				return models.Animal.find({}, { sort: { name: 1, description: -1 } })
+					.then((docs) => {
+						expect(docs).to.be.instanceof(Array);
+						expect(docs).to.have.length(3);
+						let lastData = null;
+						for (let animal of docs) {
+							let data = animal.getData();
+							if (lastData !== null) {
+								expect(data.description).to.be.lte(lastData.description);
+								if (data.description === lastData.description) {
+									expect(data.name).to.be.gte(lastData.name);
+								}
+							}
+							lastData = data;
+						}
+					});
+			});
+
+			it('index', function() {
+				return models.Animal._ensureIndex('uetest_fakeanimals')
+					.then((index) => models.Animal._ensureMapping(index))
+					.then(() => {
+						let fakeAnimal = models.Animal.create({
+							animalId: 'data-dog-ein',
+							name: 'Ein',
+							sex: 'male',
+							description: 'What is a data dog, anyway?'
+						});
+						fakeAnimal.setIndexId('uetest_fakeanimals');
+						return fakeAnimal.save({ consistency: 'quorum', refresh: true });
+					})
+					.then(() => models.Animal.find({}, { index: 'uetest_fakeanimals' }))
+					.then((docs) => {
+						expect(docs).to.be.instanceof(Array);
+						expect(docs).to.have.length(1);
+						for (let animal of docs) {
+							expect(animal).to.be.instanceof(ElasticsearchDocument);
+							expect(animal.getIndexId()).to.equal('uetest_fakeanimals');
+						}
+					});
+			});
+
+			it.skip('routing', function() {});
+
+		});
+	});
+
 	describe.skip('#findStream', function() {});
-	describe.skip('#find', function() {});
 	describe.skip('#insert', function() {});
 	describe.skip('#insertMulti', function() {});
 	describe.skip('#count', function() {});
