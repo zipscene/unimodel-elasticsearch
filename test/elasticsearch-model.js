@@ -32,7 +32,7 @@ describe('ElasticsearchModel', function() {
 					isDog: true,
 					sex: 'male',
 					description: 'A little asshole.'
-				});
+				}, { routing: 'Charles' });
 
 				let baloo = models.Animal.create({
 					animalId: 'opes-farm-dog-baloo',
@@ -40,7 +40,7 @@ describe('ElasticsearchModel', function() {
 					isDog: true,
 					sex: 'male',
 					description: 'What is a data dog, anyway?'
-				});
+				}, { routing: 'Baloo' });
 
 				let ein = models.Animal.create({
 					animalId: 'data-dog-ein',
@@ -48,7 +48,7 @@ describe('ElasticsearchModel', function() {
 					isDog: false,
 					sex: 'female',
 					description: 'A little asshole.'
-				});
+				}, { routing: 'Ein' });
 
 				return Promise.all([
 					charles.save({ consistency: 'quorum', refresh: true }),
@@ -290,8 +290,7 @@ describe('ElasticsearchModel', function() {
 							name: 'Ein',
 							sex: 'male',
 							description: 'What is a data dog, anyway?'
-						});
-						fakeAnimal.setIndexId('uetest_fakeanimals');
+						}, { index: 'uetest_fakeanimals' });
 						return fakeAnimal.save({ consistency: 'quorum', refresh: true });
 					})
 					.then(() => models.Animal.find({}, { index: 'uetest_fakeanimals' }))
@@ -305,12 +304,18 @@ describe('ElasticsearchModel', function() {
 					});
 			});
 
-			it.skip('routing', function() {});
+			it('routing', function() {
+				return models.Animal.find({}, { routing: 'Ein' })
+					.then((docs) => {
+						expect(docs).to.be.instanceof(Array);
+						expect(docs).to.not.have.length(3); // Means we hit a shart without the other dogs
+					});
+			});
 
 		});
 	});
 
-	describe.only('#findStream', function() {
+	describe('#findStream', function() {
 
 		it('should find male documents', function() {
 			let docStream = models.Animal.findStream({ isDog: true });
@@ -351,22 +356,37 @@ describe('ElasticsearchModel', function() {
 			return models.Animal._ensureIndex('uetest_fakeanimals_stream')
 				.then((index) => models.Animal._ensureMapping(index))
 				.then(() => {
-					let fakeAnimalA = models.Animal.create({ animalId: 'data-dog-a', isDog: true });
-					let fakeAnimalB = models.Animal.create({ animalId: 'data-dog-b', isDog: true });
-					let fakeAnimalC = models.Animal.create({ animalId: 'data-dog-c', isDog: true });
-					let fakeAnimalD = models.Animal.create({ animalId: 'data-dog-d', isDog: true });
-					let fakeAnimalE = models.Animal.create({ animalId: 'data-dog-e', isDog: false });
-					fakeAnimalA.setIndexId('uetest_fakeanimals_stream');
-					fakeAnimalB.setIndexId('uetest_fakeanimals_stream');
-					fakeAnimalC.setIndexId('uetest_fakeanimals_stream');
-					fakeAnimalD.setIndexId('uetest_fakeanimals_stream');
-					fakeAnimalE.setIndexId('uetest_fakeanimals_stream');
+					let fakeAnimalA = models.Animal.create(
+						{ animalId: 'data-dog-a', isDog: true },
+						{ routing: 'Ein', index: 'uetest_fakeanimals_stream' }
+					);
+					let fakeAnimalB = models.Animal.create(
+						{ animalId: 'data-dog-b', isDog: true },
+						{ routing: 'Ein', index: 'uetest_fakeanimals_stream' }
+					);
+					let fakeAnimalC = models.Animal.create(
+						{ animalId: 'data-dog-c', isDog: true },
+						{ routing: 'Ein', index: 'uetest_fakeanimals_stream' }
+					);
+					let fakeAnimalD = models.Animal.create(
+						{ animalId: 'data-dog-d', isDog: true },
+						{ routing: 'Ein', index: 'uetest_fakeanimals_stream' }
+					);
+					let fakeAnimalE = models.Animal.create(
+						{ animalId: 'data-dog-e', isDog: false },
+						{ routing: 'Ein', index: 'uetest_fakeanimals_stream' }
+					);
+					let fakeAnimalF = models.Animal.create(
+						{ animalId: 'data-dog-f', isDog: true },
+						{ routing: 'Baloo', index: 'uetest_fakeanimals_stream' }
+					);
 					return Promise.all([
 						fakeAnimalA.save({ consistency: 'quorum', refresh: true }),
 						fakeAnimalB.save({ consistency: 'quorum', refresh: true }),
 						fakeAnimalC.save({ consistency: 'quorum', refresh: true }),
 						fakeAnimalD.save({ consistency: 'quorum', refresh: true }),
-						fakeAnimalE.save({ consistency: 'quorum', refresh: true })
+						fakeAnimalE.save({ consistency: 'quorum', refresh: true }),
+						fakeAnimalF.save({ consistency: 'quorum', refresh: true })
 					]);
 				})
 				.then(() => models.Animal.findStream({ isDog: true }, {
@@ -375,7 +395,7 @@ describe('ElasticsearchModel', function() {
 					fields: { isDog: 0 },
 					sort: { animalId: 1 },
 					index: 'uetest_fakeanimals_stream',
-					// routing: 'wat??', TODO: I don't know how to test this
+					routing: 'Ein',
 					scrollSize: 1,
 					scrollTimeout: '2m'
 				}))
