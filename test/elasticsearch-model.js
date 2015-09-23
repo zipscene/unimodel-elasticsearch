@@ -454,12 +454,96 @@ describe('ElasticsearchModel', function() {
 				});
 		});
 
+		it('should fail to normalize a bad update', function() {
+			expect(() => models.Animal.update({}, { $what: {} }))
+				.to.throw(Error, 'operator: $what');
+		});
+
 	});
 
-	describe.skip('#insert', function() {});
-	describe.skip('#insertMulti', function() {});
-	describe.skip('#count', function() {});
+	describe('#count', function() {
+
+		it('should count the number of documents given a query', function() {
+			return models.Animal.count({ isDog: true })
+				.then((count) => {
+					expect(count).to.equal(2);
+				});
+		});
+
+	});
+
+	describe.only('#insert', function() {
+
+		it('should insert one document', function() {
+			return models.Animal.insert(
+				{ animalId: 'charles', isDog: true, name: 'Charles' },
+				{ index: 'uetest_fakeanimals_insert', consistency: 'quorum', refresh: true }
+			)
+				.then(() => models.Animal.find({}, { index: 'uetest_fakeanimals_insert' }))
+				.then((docs) => {
+					// Check retrun form find after they should be inserted
+					expect(docs).to.be.instanceof(Array);
+					expect(docs).to.have.length(1);
+					for (let animal of docs) {
+						expect(animal).to.be.instanceof(ElasticsearchDocument);
+					}
+				});
+		});
+
+	});
+
+	describe('#insertMulti', function() {
+
+		it('should insert multiple documents', function() {
+			return models.Animal.insertMulti([
+				{ animalId: 'charles', isDog: true, name: 'Charles' },
+				{ animalId: 'baloo', isDog: true, name: 'Baloo' },
+				{ animalId: 'ein', isDog: false, name: 'Ein' }
+			], {
+				index: 'uetest_fakeanimals_insertmulti',
+				consistency: 'quorum',
+				refresh: true
+			})
+				.then(() => models.Animal.find({}, { index: 'uetest_fakeanimals_insertmulti' }))
+				.then((docs) => {
+					// Check retrun form find after they should be inserted
+					expect(docs).to.be.instanceof(Array);
+					expect(docs).to.have.length(3);
+					for (let animal of docs) {
+						expect(animal).to.be.instanceof(ElasticsearchDocument);
+					}
+				});
+		});
+
+	});
+
 	describe.skip('#aggregateMulti', function() {});
-	describe.skip('#remove', function() {});
+
+	describe.skip('#remove', function() {
+
+		it('should remove documents', function() {
+			return models.Animal.insertMulti([
+				{ animalId: 'charles', isDog: true, name: 'Charles' },
+				{ animalId: 'baloo', isDog: true, name: 'Baloo' },
+				{ animalId: 'ein', isDog: false, name: 'Ein' }
+			], {
+				index: 'uetest_fakeanimals_remove',
+				consistency: 'quorum',
+				refresh: true
+			})
+				.then(() => models.Animal.remove({ isDog: true }, {
+					index: 'uetest_fakeanimals_remove'
+				}))
+				.then(() => models.Animal.find({}, { index: 'uetest_fakeanimals_remove' }))
+				.then((docs) => {
+					expect(docs).to.be.instanceof(Array);
+					expect(docs).to.have.length(1);
+					for (let animal of docs) {
+						expect(animal).to.be.instanceof(ElasticsearchDocument);
+					}
+				});
+		});
+
+	});
 
 });
