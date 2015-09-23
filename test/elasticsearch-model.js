@@ -338,6 +338,15 @@ describe('ElasticsearchModel', function() {
 				});
 		});
 
+		it('should have getTotal', function() {
+			let docStream = models.Animal.findStream({ isDog: true });
+			return docStream.intoArray()
+				.then(() => docStream.getTotal())
+				.then((total) => {
+					expect(total).to.equal(2);
+				});
+		});
+
 		it('should find with options', function() {
 			return models.Animal._ensureIndex('uetest_fakeanimals_stream')
 				.then((index) => models.Animal._ensureMapping(index))
@@ -370,20 +379,26 @@ describe('ElasticsearchModel', function() {
 					scrollSize: 1,
 					scrollTimeout: '2m'
 				}))
-				.then((docStream) => docStream.intoArray())
-				.then((docs) => {
-					expect(docs).to.be.instanceof(Array);
-					expect(docs).to.have.length(2); // Test skip/limit
-					let lastId = null;
-					for (let animal of docs) {
-						let data = animal.getData();
-						expect(data.animalId).to.exist;
-						expect(data.isDog).to.not.exist; // Test fields
-						if (lastId !== null) {
-							expect(lastId).to.be.lte(data.animalId); // Test sort
-						}
-						lastId = data.animalId;
-					}
+				.then((docStream) => {
+					return docStream.intoArray()
+						.then((docs) => {
+							expect(docs).to.be.instanceof(Array);
+							expect(docs).to.have.length(2); // Test skip/limit
+							let lastId = null;
+							for (let animal of docs) {
+								let data = animal.getData();
+								expect(data.animalId).to.exist;
+								expect(data.isDog).to.not.exist; // Test fields
+								if (lastId !== null) {
+									expect(lastId).to.be.lte(data.animalId); // Test sort
+								}
+								lastId = data.animalId;
+							}
+						})
+						.then(() => docStream.getTotal())
+						.then((total) => {
+							expect(total).to.equal(2); // Test ElasticsearchDocumentStrem#getTotal
+						});
 				});
 		});
 
@@ -398,11 +413,15 @@ describe('ElasticsearchModel', function() {
 		});
 
 	});
+
+	describe('#update', function() {
+
+	});
+
 	describe.skip('#insert', function() {});
 	describe.skip('#insertMulti', function() {});
 	describe.skip('#count', function() {});
 	describe.skip('#aggregateMulti', function() {});
 	describe.skip('#remove', function() {});
-	describe.skip('#update', function() {});
 
 });
