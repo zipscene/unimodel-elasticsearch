@@ -436,6 +436,24 @@ describe('ElasticsearchModel', function() {
 
 	describe('#update', function() {
 
+		it('should update a stream of documents', function() {
+			return models.Animal.update(
+				{ isDog: true },
+				{ $set: { updatable: 'whoa, dude!' } },
+				{ consistency: 'quorum', refresh: true }
+			)
+				.then(() => models.Animal.find({ isDog: true }))
+				.then((docs) => {
+					expect(docs).to.be.instanceof(Array);
+					expect(docs).to.have.length(2);
+					for (let animal of docs) {
+						let data = animal.getData();
+						expect(data.isDog).to.be.true;
+						expect(data.updatable).to.equal('whoa, dude!');
+					}
+				});
+		});
+
 	});
 
 	describe.skip('#insert', function() {});

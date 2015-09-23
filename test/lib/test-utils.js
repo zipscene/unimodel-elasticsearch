@@ -73,6 +73,7 @@ function createTestModels() {
 			sex: { type: String, enum: [ 'male', 'female', 'unknown' ] },
 			isDog: { type: Boolean, index: true },
 			description: { type: String, index: true },
+			updatable: { type: String },
 			loc: {
 				type: 'geopoint',
 				index: true
