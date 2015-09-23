@@ -21,9 +21,42 @@ function makePerson(initialize = true, keys) {
 describe('ElasticsearchModel', function() {
 
 	let models;
-	before(() => testUtils.resetAndConnect().then(() => {
-		models = testUtils.createTestModels();
-	}));
+	before(() => {
+		return testUtils.resetAndConnect()
+			.then(() => {
+				models = testUtils.createTestModels();
+
+				let charles = models.Animal.create({
+					animalId: 'dog-charles-barkley-male',
+					name: 'Charles Barkley',
+					isDog: true,
+					sex: 'male',
+					description: 'A little asshole.'
+				});
+
+				let baloo = models.Animal.create({
+					animalId: 'opes-farm-dog-baloo',
+					name: 'Baloo',
+					isDog: true,
+					sex: 'male',
+					description: 'What is a data dog, anyway?'
+				});
+
+				let ein = models.Animal.create({
+					animalId: 'data-dog-ein',
+					name: 'Ein',
+					isDog: false,
+					sex: 'female',
+					description: 'A little asshole.'
+				});
+
+				return Promise.all([
+					charles.save({ consistency: 'quorum', refresh: true }),
+					baloo.save({ consistency: 'quorum', refresh: true }),
+					ein.save({ consistency: 'quorum', refresh: true })
+				]);
+			});
+	});
 
 	describe('#constructor', function() {
 
@@ -150,38 +183,6 @@ describe('ElasticsearchModel', function() {
 
 	describe('#find', function() {
 
-		before(function() {
-			let charles = models.Animal.create({
-				animalId: 'dog-charles-barkley-male',
-				name: 'Charles Barkley',
-				isDog: true,
-				sex: 'male',
-				description: 'A little asshole.'
-			});
-
-			let baloo = models.Animal.create({
-				animalId: 'opes-farm-dog-baloo',
-				name: 'Baloo',
-				isDog: true,
-				sex: 'male',
-				description: 'What is a data dog, anyway?'
-			});
-
-			let ein = models.Animal.create({
-				animalId: 'data-dog-ein',
-				name: 'Ein',
-				isDog: false,
-				sex: 'female',
-				description: 'A little asshole.'
-			});
-
-			return Promise.all([
-				charles.save({ consistency: 'quorum', refresh: true }),
-				baloo.save({ consistency: 'quorum', refresh: true }),
-				ein.save({ consistency: 'quorum', refresh: true })
-			]);
-		});
-
 		it('should find all 3 documents', function() {
 			return models.Animal.find({})
 				.then((docs) => {
@@ -210,6 +211,7 @@ describe('ElasticsearchModel', function() {
 			expect(() => models.Animal.find({ sex: { $what: { $what: '$what' } } }))
 				.to.throw(QueryValidationError, 'Unrecognized expression operator: $what');
 		});
+
 		it('should fail to convert bad queries', function() {
 			expect(() => models.Animal.find({ sex: 'male' }))
 				.to.throw(QueryValidationError, 'Field is not indexed: sex');
@@ -308,7 +310,94 @@ describe('ElasticsearchModel', function() {
 		});
 	});
 
-	describe.skip('#findStream', function() {});
+	describe.only('#findStream', function() {
+
+		it('should find male documents', function() {
+			let docStream = models.Animal.findStream({ isDog: true });
+			// Duck type check if this looks like a stream
+			expect(docStream).to.be.an('object');
+			expect(docStream.read).to.be.a('function');
+			expect(docStream.on).to.be.a('function');
+			return docStream.intoArray()
+				.then((docs) => {
+					expect(docs).to.be.instanceof(Array);
+					expect(docs).to.have.length(2);
+					for (let animal of docs) {
+						expect(animal).to.be.instanceof(ElasticsearchDocument);
+						expect(animal.getData().isDog).to.be.true;
+					}
+				});
+		});
+
+		it('should handle an query with no matches', function() {
+			let docStream = models.Animal.findStream({ name: 'Larry Bird' });
+			return docStream.intoArray()
+				.then((docs) => {
+					expect(docs).to.be.instanceof(Array);
+					expect(docs).to.have.length(0);
+				});
+		});
+
+		it('should find with options', function() {
+			return models.Animal._ensureIndex('uetest_fakeanimals_stream')
+				.then((index) => models.Animal._ensureMapping(index))
+				.then(() => {
+					let fakeAnimalA = models.Animal.create({ animalId: 'data-dog-a', isDog: true });
+					let fakeAnimalB = models.Animal.create({ animalId: 'data-dog-b', isDog: true });
+					let fakeAnimalC = models.Animal.create({ animalId: 'data-dog-c', isDog: true });
+					let fakeAnimalD = models.Animal.create({ animalId: 'data-dog-d', isDog: true });
+					let fakeAnimalE = models.Animal.create({ animalId: 'data-dog-e', isDog: false });
+					fakeAnimalA.setIndexId('uetest_fakeanimals_stream');
+					fakeAnimalB.setIndexId('uetest_fakeanimals_stream');
+					fakeAnimalC.setIndexId('uetest_fakeanimals_stream');
+					fakeAnimalD.setIndexId('uetest_fakeanimals_stream');
+					fakeAnimalE.setIndexId('uetest_fakeanimals_stream');
+					return Promise.all([
+						fakeAnimalA.save({ consistency: 'quorum', refresh: true }),
+						fakeAnimalB.save({ consistency: 'quorum', refresh: true }),
+						fakeAnimalC.save({ consistency: 'quorum', refresh: true }),
+						fakeAnimalD.save({ consistency: 'quorum', refresh: true }),
+						fakeAnimalE.save({ consistency: 'quorum', refresh: true })
+					]);
+				})
+				.then(() => models.Animal.findStream({ isDog: true }, {
+					skip: 1,
+					limit: 2,
+					fields: { isDog: 0 },
+					sort: { animalId: 1 },
+					index: 'uetest_fakeanimals_stream',
+					// routing: 'wat??', TODO: I don't know how to test this
+					scrollSize: 1,
+					scrollTimeout: '2m'
+				}))
+				.then((docStream) => docStream.intoArray())
+				.then((docs) => {
+					expect(docs).to.be.instanceof(Array);
+					expect(docs).to.have.length(2); // Test skip/limit
+					let lastId = null;
+					for (let animal of docs) {
+						let data = animal.getData();
+						expect(data.animalId).to.exist;
+						expect(data.isDog).to.not.exist; // Test fields
+						if (lastId !== null) {
+							expect(lastId).to.be.lte(data.animalId); // Test sort
+						}
+						lastId = data.animalId;
+					}
+				});
+		});
+
+		it('should fail to normalize bad queries', function() {
+			expect(() => models.Animal.find({ sex: { $what: { $what: '$what' } } }))
+				.to.throw(QueryValidationError, 'Unrecognized expression operator: $what');
+		});
+
+		it('should fail to convert bad queries', function() {
+			expect(() => models.Animal.find({ sex: 'male' }))
+				.to.throw(QueryValidationError, 'Field is not indexed: sex');
+		});
+
+	});
 	describe.skip('#insert', function() {});
 	describe.skip('#insertMulti', function() {});
 	describe.skip('#count', function() {});
