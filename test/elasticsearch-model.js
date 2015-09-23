@@ -472,7 +472,7 @@ describe('ElasticsearchModel', function() {
 
 	});
 
-	describe.only('#insert', function() {
+	describe('#insert', function() {
 
 		it('should insert one document', function() {
 			return models.Animal.insert(
@@ -517,9 +517,7 @@ describe('ElasticsearchModel', function() {
 
 	});
 
-	describe.skip('#aggregateMulti', function() {});
-
-	describe.skip('#remove', function() {
+	describe('#remove', function() {
 
 		it('should remove documents', function() {
 			return models.Animal.insertMulti([
@@ -545,5 +543,7 @@ describe('ElasticsearchModel', function() {
 		});
 
 	});
+
+	describe.skip('#aggregateMulti', function() {});
 
 });
