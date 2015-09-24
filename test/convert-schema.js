@@ -1,10 +1,10 @@
 const { createSchema, map, or, Mixed } = require('zs-common-schema');
 const { expect } = require('chai');
 
-const { schemaToMapping } = require('../lib/schema-to-mapping');
+const { convertSchema } = require('../lib/convert/schema');
 const { ElasticsearchMappingValidationError } = require('../lib');
 
-describe('schema-to-mapping', function() {
+describe('convertSchema', function() {
 
 	describe('general', function() {
 
@@ -55,13 +55,13 @@ describe('schema-to-mapping', function() {
 				}
 			};
 
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			expect(mapping).to.deep.equal(expected);
 		});
 
 		it('should fail to if root of schema is not an object', function() {
 			let schema = createSchema([ Number ]);
-			expect(() => schemaToMapping(schema))
+			expect(() => convertSchema(schema))
 				.to.throw(
 					ElasticsearchMappingValidationError,
 					/Schema root must be type "object" to be converted to ElasticSearch Mapping/
@@ -73,7 +73,7 @@ describe('schema-to-mapping', function() {
 				foo: String
 			});
 			schema.getData().properties.foo.type = 'invalid!';
-			expect(() => schemaToMapping(schema))
+			expect(() => convertSchema(schema))
 				.to.throw(
 					ElasticsearchMappingValidationError,
 					/Cannot convert unknown schema type \(invalid!\) to ElasticSearch Mapping/
@@ -88,7 +88,7 @@ describe('schema-to-mapping', function() {
 			let schema = createSchema({
 				foo: String
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -110,7 +110,7 @@ describe('schema-to-mapping', function() {
 					analyzer: 'standard'
 				}
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -132,7 +132,7 @@ describe('schema-to-mapping', function() {
 					index: 'analyzed'
 				}
 			});
-			expect(() => schemaToMapping(schema))
+			expect(() => convertSchema(schema))
 				.to.throw(ElasticsearchMappingValidationError, /Analyzed value at "foo" is missing analyzer value/);
 		});
 
@@ -144,7 +144,7 @@ describe('schema-to-mapping', function() {
 			let schema = createSchema({
 				bar: Number
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -166,7 +166,7 @@ describe('schema-to-mapping', function() {
 					numberType: 'integer'
 				}
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -188,7 +188,7 @@ describe('schema-to-mapping', function() {
 					precisionStep: 16
 				}
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -210,7 +210,7 @@ describe('schema-to-mapping', function() {
 					numberType: 'bigint'
 				}
 			});
-			expect(() => schemaToMapping(schema))
+			expect(() => convertSchema(schema))
 				.to.throw(
 					ElasticsearchMappingValidationError,
 					/Number type at "bar" is an invalid ElasticSearch Number Type/
@@ -224,7 +224,7 @@ describe('schema-to-mapping', function() {
 					precisionStep: 'invalid'
 				}
 			});
-			expect(() => schemaToMapping(schema))
+			expect(() => convertSchema(schema))
 				.to.throw(
 					ElasticsearchMappingValidationError,
 					/Number precision step at "bar" must be an integer or a parsable string/
@@ -239,7 +239,7 @@ describe('schema-to-mapping', function() {
 			let schema = createSchema({
 				bar: Boolean
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -261,7 +261,7 @@ describe('schema-to-mapping', function() {
 			let schema = createSchema({
 				bar: Date
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -283,7 +283,7 @@ describe('schema-to-mapping', function() {
 					format: 'custom!'
 				}
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -309,7 +309,7 @@ describe('schema-to-mapping', function() {
 					index: true
 				}
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -328,7 +328,7 @@ describe('schema-to-mapping', function() {
 			let schema = createSchema({
 				foo: 'geopoint'
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -350,7 +350,7 @@ describe('schema-to-mapping', function() {
 					geohash: false
 				}
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -376,7 +376,7 @@ describe('schema-to-mapping', function() {
 					baz: Date
 				}
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -410,7 +410,7 @@ describe('schema-to-mapping', function() {
 			let schema = createSchema({
 				foo: [ String ]
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -432,7 +432,7 @@ describe('schema-to-mapping', function() {
 			let schema = createSchema({
 				foo: map({}, Number)
 			});
-			expect(() => schemaToMapping(schema))
+			expect(() => convertSchema(schema))
 				.to.throw(ElasticsearchMappingValidationError, /Invalid schema type provided: map/);
 		});
 
@@ -444,7 +444,7 @@ describe('schema-to-mapping', function() {
 			let schema = createSchema({
 				foo: or({}, String, Number)
 			});
-			expect(() => schemaToMapping(schema))
+			expect(() => convertSchema(schema))
 				.to.throw(ElasticsearchMappingValidationError, /Invalid schema type provided: or/);
 		});
 
@@ -459,7 +459,7 @@ describe('schema-to-mapping', function() {
 					index: true
 				}
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -476,7 +476,7 @@ describe('schema-to-mapping', function() {
 			let schema = createSchema({
 				foo: Mixed
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				properties: {
@@ -501,7 +501,7 @@ describe('schema-to-mapping', function() {
 					index: false
 				}
 			});
-			let mapping = schemaToMapping(schema, [
+			let mapping = convertSchema(schema, [
 				{ field: 'foo', index: true, name: 'named' },
 				{ field: 'foo', index: 'analyzed', analyzer: 'standard' },
 				{ field: 'ignored', index: false }
@@ -536,7 +536,7 @@ describe('schema-to-mapping', function() {
 			let schema = createSchema({
 				foo: String
 			});
-			let mapping = schemaToMapping(schema, [
+			let mapping = convertSchema(schema, [
 				{ field: 'foo', index: true, name: 'named' },
 				{ field: 'foo', index: 'analyzed', analyzer: 'standard' },
 				{ field: 'ignored', index: false }
@@ -566,7 +566,7 @@ describe('schema-to-mapping', function() {
 			let schema = createSchema({
 				foo: String
 			});
-			expect(() => schemaToMapping(schema, [
+			expect(() => convertSchema(schema, [
 				{ field: 'foo', index: true },
 				{ field: 'foo', index: 'analyzed', analyzer: 'standard' },
 				{ field: 'ignored', index: false }
@@ -583,7 +583,7 @@ describe('schema-to-mapping', function() {
 					index: false
 				}
 			});
-			expect(() => schemaToMapping(schema, [
+			expect(() => convertSchema(schema, [
 				{ field: 'foo', index: true, name: 'named' },
 				{ field: 'foo', index: 'analyzed', analyzer: 'standard', name: 'named' },
 				{ field: 'ignored', index: false }
@@ -599,7 +599,7 @@ describe('schema-to-mapping', function() {
 					bar: String
 				}
 			});
-			expect(() => schemaToMapping(schema, [
+			expect(() => convertSchema(schema, [
 				{ field: 'foo', index: true }
 			])).to.throw(
 				ElasticsearchMappingValidationError,
@@ -619,7 +619,7 @@ describe('schema-to-mapping', function() {
 					index: true
 				}
 			});
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			let expected = {
 				_all: { enabled: false },
 				_id: { path: 'foo' },
@@ -640,7 +640,7 @@ describe('schema-to-mapping', function() {
 
 		it('should respect includeAllField option', function() {
 			let schema = createSchema({ foo: String });
-			let mapping = schemaToMapping(schema, [], { includeAllField: true });
+			let mapping = convertSchema(schema, [], { includeAllField: true });
 			let expected = {
 				_all: { enabled: true },
 				properties: {
@@ -660,7 +660,7 @@ describe('schema-to-mapping', function() {
 
 		it('should respect the parentType option', function() {
 			let schema = createSchema({ foo: String });
-			let mapping = schemaToMapping(schema, [], { parentType: 'Foobear' });
+			let mapping = convertSchema(schema, [], { parentType: 'Foobear' });
 			let expected = {
 				_all: { enabled: false },
 				_parent: { type: 'Foobear' },

@@ -5,7 +5,7 @@ const { createSchema } = require('zs-common-schema');
 
 const testUtils = require('./lib/test-utils');
 const { ElasticsearchIndex } = require('../lib');
-const { schemaToMapping } = require('../lib/schema-to-mapping');
+const { convertSchema } = require('../lib/convert');
 
 let idxItr = 0;
 function makeIndex(config = {}, name = ('uetest_idx_' + idxItr++)) {
@@ -167,7 +167,7 @@ describe('ElasticsearchIndex', function() {
 
 		it('should wait until the index is initialized, then add mapping', function() {
 			let schema = createSchema({ dogId: { type: String, index: true }, name: String });
-			let mapping = schemaToMapping(schema);
+			let mapping = convertSchema(schema);
 			return dogIndex.addMapping('Dog', mapping).then(() => {
 				return testUtils.getConnection().getClient();
 			})
