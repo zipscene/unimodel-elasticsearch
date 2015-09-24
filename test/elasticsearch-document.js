@@ -153,4 +153,16 @@ describe('ElasticsearchDocument', function() {
 			});
 	});
 
+	it('should fail to save with invalid "consistency" argument', function() {
+		let invalid = models.Animal.create({ animalId: 'invalid' });
+		expect(() => invalid.save({ consistency: 'none' }))
+			.to.throw(XError.INVALID_ARGUMENT, 'Save consistency options must be one of: "one", "quorum", "all"');
+	});
+
+	it('should fail to save with invalid "replication" argument', function() {
+		let invalid = models.Animal.create({ animalId: 'invalid' });
+		expect(() => invalid.save({ replication: 'all-the-things' }))
+			.to.throw(XError.INVALID_ARGUMENT, 'Replication types must be one of: "sync", "async"');
+	});
+
 });

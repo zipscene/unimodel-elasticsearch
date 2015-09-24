@@ -417,7 +417,7 @@ describe('ElasticsearchModel', function() {
 						})
 						.then(() => docStream.getTotal())
 						.then((total) => {
-							expect(total).to.equal(2); // Test ElasticsearchDocumentStrem#getTotal
+							expect(total).to.equal(4); // Test ElasticsearchDocumentStrem#getTotal
 						});
 				});
 		});
