@@ -2,10 +2,10 @@ const { expect } = require('chai');
 const { QueryValidationError } = require('zs-common-query');
 
 const { createQuery } = require('../lib/common-query');
-const { elasticsearchQueryConvert: queryConvert } = require('../lib/elasticsearch-query-convert');
+const { convertQuery } = require('../lib/convert/query');
 const testUtils = require('./lib/test-utils');
 
-describe('query-convert', function() {
+describe('convertQuery', function() {
 
 	let models;
 	before(() => testUtils.resetAndConnect()
@@ -17,12 +17,12 @@ describe('query-convert', function() {
 
 		it('should convert an empty query', function() {
 			let query = createQuery({});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({ 'match_all': {} });
+			expect(convertQuery(query, models.Animal)).to.deep.equal({ 'match_all': {} });
 		});
 
 		it('should convert an exact match', function() {
 			let query = createQuery({ animalId: 'charles-barkley-dog-male' });
-			expect(queryConvert(query, models.Animal))
+			expect(convertQuery(query, models.Animal))
 				.to.deep.equal({ term: { animalId: 'charles-barkley-dog-male' } });
 		});
 
@@ -33,7 +33,7 @@ describe('query-convert', function() {
 					{ animalId: 'baloo-dog-male' }
 				]
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				bool: { must: [
 					{ term: { animalId: 'charles-barkley-dog-male' } },
 					{ term: { animalId: 'baloo-dog-male' } }
@@ -48,7 +48,7 @@ describe('query-convert', function() {
 					{ animalId: 'baloo-dog-male' }
 				]
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				bool: { 'must_not': [
 					{ term: { animalId: 'charles-barkley-dog-male' } },
 					{ term: { animalId: 'baloo-dog-male' } }
@@ -63,7 +63,7 @@ describe('query-convert', function() {
 					{ animalId: 'baloo-dog-male' }
 				]
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				bool: { should: [
 					{ term: { animalId: 'charles-barkley-dog-male' } },
 					{ term: { animalId: 'baloo-dog-male' } }
@@ -82,7 +82,7 @@ describe('query-convert', function() {
 					] }
 				]
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				bool: { must: [
 					{ bool: { should: [
 						{ term: { animalId: 'charles-barkley-dog-male' } }
@@ -102,7 +102,7 @@ describe('query-convert', function() {
 					}
 				}
 			});
-			expect(queryConvert(query, models.Shelter)).to.deep.equal({
+			expect(convertQuery(query, models.Shelter)).to.deep.equal({
 				'has_child': {
 					type: 'ShelteredAnimal',
 					filter: { term: {
@@ -120,7 +120,7 @@ describe('query-convert', function() {
 					}
 				}
 			});
-			expect(queryConvert(query, models.ShelteredAnimal)).to.deep.equal({
+			expect(convertQuery(query, models.ShelteredAnimal)).to.deep.equal({
 				'has_parent': {
 					type: 'Shelter',
 					filter: { term: {
@@ -139,7 +139,7 @@ describe('query-convert', function() {
 					}
 				}
 			});
-			expect(queryConvert(query, models.Shelter)).to.deep.equal({
+			expect(convertQuery(query, models.Shelter)).to.deep.equal({
 				'has_child': {
 					type: 'ShelteredAnimal',
 					min_children: 5, //eslint-disable-line camelcase
@@ -159,7 +159,7 @@ describe('query-convert', function() {
 					}
 				}
 			});
-			expect(queryConvert(query, models.Shelter)).to.deep.equal({
+			expect(convertQuery(query, models.Shelter)).to.deep.equal({
 				'has_child': {
 					type: 'ShelteredAnimal',
 					max_children: 6, //eslint-disable-line camelcase
@@ -178,7 +178,7 @@ describe('query-convert', function() {
 					}
 				}
 			});
-			expect(() => queryConvert(query, models.Shelter))
+			expect(() => convertQuery(query, models.Shelter))
 				.to.throw(QueryValidationError, 'Could not find field bedId in schema');
 		});
 
@@ -192,7 +192,7 @@ describe('query-convert', function() {
 					$text: 'dog'
 				}
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				query: { match: {
 					description: {
 						query: 'dog',
@@ -208,7 +208,7 @@ describe('query-convert', function() {
 					$wildcard: 'dog*'
 				}
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				regexp: {
 					description: '^dog.*$'
 				}
@@ -219,7 +219,7 @@ describe('query-convert', function() {
 			let query = createQuery({
 				description: { $not: { $wildcard: 'dog' } }
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				bool: { 'must_not': {
 					regexp: { description: '^dog$' }
 				} }
@@ -233,7 +233,7 @@ describe('query-convert', function() {
 					$text: 'dog'
 				} }
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				bool: { 'must_not': [
 					{ regexp: { description: '^dog$' } },
 					{ query: { match: { description: { query: 'dog', operator: 'and' } } } }
@@ -245,7 +245,7 @@ describe('query-convert', function() {
 			let query = createQuery({
 				animalId: { $exists: true }
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				exists: 'animalId'
 			});
 		});
@@ -254,7 +254,7 @@ describe('query-convert', function() {
 			let query = createQuery({
 				animalId: { $exists: false }
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				missing: 'animalId'
 			});
 		});
@@ -263,7 +263,7 @@ describe('query-convert', function() {
 			let query = createQuery({
 				animalId: { $in: [ 'charles', 'barkley', 'baloo' ] }
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				terms: {
 					animalId: [ 'charles', 'barkley', 'baloo' ]
 				}
@@ -274,7 +274,7 @@ describe('query-convert', function() {
 			let query = createQuery({
 				animalId: { $all: [ 'charles', 'barkley', 'baloo' ] }
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				bool: { must: [
 					{ term: { animalId: 'charles' } },
 					{ term: { animalId: 'barkley' } },
@@ -289,7 +289,7 @@ describe('query-convert', function() {
 					$regex: 'dog'
 				}
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				regexp: {
 					description: 'dog'
 				}
@@ -300,7 +300,7 @@ describe('query-convert', function() {
 			let query = createQuery({
 				animalId: { $gt: 'dog' }
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				range: {
 					animalId: {
 						gt: 'dog'
@@ -313,7 +313,7 @@ describe('query-convert', function() {
 			let query = createQuery({
 				animalId: { $gte: 'dog' }
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				range: {
 					animalId: {
 						gte: 'dog'
@@ -326,7 +326,7 @@ describe('query-convert', function() {
 			let query = createQuery({
 				animalId: { $lt: 'dog' }
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				range: {
 					animalId: {
 						lt: 'dog'
@@ -339,7 +339,7 @@ describe('query-convert', function() {
 			let query = createQuery({
 				animalId: { $lte: 'dog' }
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				range: {
 					animalId: {
 						lte: 'dog'
@@ -352,7 +352,7 @@ describe('query-convert', function() {
 			let query = createQuery({
 				animalId: { $nin: [ 'charles', 'barkley', 'baloo' ] }
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				bool: { 'must_not': [
 					{ term: { animalId: 'charles' } },
 					{ term: { animalId: 'barkley' } },
@@ -367,7 +367,7 @@ describe('query-convert', function() {
 					bedId: 'couch'
 				} }
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				nested: {
 					path: 'beds',
 					filter: { term: { bedId: 'couch' } }
@@ -387,7 +387,7 @@ describe('query-convert', function() {
 					}
 				}
 			});
-			expect(queryConvert(query, models.Animal)).to.deep.equal({
+			expect(convertQuery(query, models.Animal)).to.deep.equal({
 				'geo_distance': {
 					distance: '' + 5 + 'm',
 					loc: [ 0.5, 1.3 ]
