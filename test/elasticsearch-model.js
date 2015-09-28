@@ -544,11 +544,27 @@ describe('ElasticsearchModel', function() {
 
 	});
 
-	describe.skip('#aggregateMulti', function() {
+	describe('#aggregateMulti', function() {
+
+		before(() => models.ShelteredAnimal.insertMulti([
+			//TODO: add a bunch of test animals to aggregate
+		]));
 
 		describe('single aggregate', function() {
 
-			it('stats', function() {});
+			it.only('stats', function() {
+				return models.ShelteredAnimal.aggregateMulti({}, [ {
+					stats: 'age'
+				} ]).then((aggr) => {
+					expect(aggr).to.deep.equal({
+						stats: {
+							age: {
+								count: 5
+							}
+						}
+					});
+				});
+			});
 
 			it('total', function() {});
 
