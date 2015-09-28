@@ -544,6 +544,37 @@ describe('ElasticsearchModel', function() {
 
 	});
 
-	describe.skip('#aggregateMulti', function() {});
+	describe.skip('#aggregateMulti', function() {
+
+		describe('single aggregate', function() {
+
+			it('stats', function() {});
+
+			it('total', function() {});
+
+			it('groupBy field', function() {});
+
+			it('groupBy date range', function() {});
+
+			it('groupBy numeric range', function() {});
+
+			it('groupBy date interval', function() {});
+
+			it('groupBy numeric interval', function() {});
+
+			it('groupBy time component', function() {});
+
+			it('complex', function() {});
+
+		});
+
+		describe('multiple aggregates', function() {
+
+			it('complex', function() {
+			});
+
+		});
+
+	});
 
 });
