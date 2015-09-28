@@ -587,23 +587,23 @@ describe('ElasticsearchModel', function() {
 		describe.only('single aggregate', function() {
 
 			it('stats', function() {
-				return models.Animal.aggregateMulti({}, [ {
+				return models.Animal.aggregate({}, {
 					stats: 'age'
-				} ], { index: 'uetest_aggregates' }).then((aggr) => {
-					expect(aggr).to.deep.equal([ {
+				}, { index: 'uetest_aggregates' }).then((aggr) => {
+					expect(aggr).to.deep.equal({
 						stats: {
 							age: {
 								count: 5
 							}
 						}
-					} ]);
+					});
 				});
 			});
 
 			it('total', function() {
-				return models.Animal.aggregateMulti({}, [ {
+				return models.Animal.aggregate({}, {
 					total: true
-				} ], { index: 'uetest_aggregates' }).then(([ aggr ]) => {
+				}, { index: 'uetest_aggregates' }).then((aggr) => {
 					expect(aggr).to.deep.equal({
 						total: 5
 					});
@@ -611,11 +611,11 @@ describe('ElasticsearchModel', function() {
 			});
 
 			it('groupBy field', function() {
-				return models.Animal.aggregateMulti({}, [ {
+				return models.Animal.aggregate({}, {
 					groupBy: 'name',
 					stats: 'age',
 					total: true
-				} ], { index: 'uetest_aggregates' }).then(([ aggr ]) => {
+				}, { index: 'uetest_aggregates' }).then((aggr) => {
 					expect(aggr).to.be.instanceof(Array);
 					expect(aggr).to.have.length(3);
 					let expected = [
@@ -639,21 +639,51 @@ describe('ElasticsearchModel', function() {
 				});
 			});
 
-			it('groupBy date range', function() {});
+			it('groupBy date range', function() {
+				let dateJan = moment('2015-01-02', 'YYYY-MM-DD').toDate();
+				let dateFeb = moment('2015-02-01', 'YYYY-MM-DD').toDate();
+				return models.Animal.aggregate({}, {
+					groupBy: { // Date Range
+						field: 'found',
+						ranges: [
+							{ end: dateJan },
+							{ start: dateJan, end: dateFeb },
+							{ start: dateFeb }
+						]
+					},
+					total: true
+				}, { index: 'uetest_aggregates' }).then((aggr) => {
+					expect(aggr).to.deep.equal([
+						{
+							keys: [ 0 ],
+							total: 1
+						},
+						{
+							keys: [ 1 ],
+							total: 2
+						},
+						{
+							keys: [ 2 ],
+							total: 2
+						}
+					]);
+				});
 
-			it('groupBy numeric range', function() {});
+			});
 
-			it('groupBy date interval', function() {});
+			it.skip('groupBy numeric range', function() {});
 
-			it('groupBy numeric interval', function() {});
+			it.skip('groupBy date interval', function() {});
 
-			it('groupBy time component', function() {});
+			it.skip('groupBy numeric interval', function() {});
 
-			it('complex', function() {});
+			it.skip('groupBy time component', function() {});
+
+			it.skip('complex', function() {});
 
 		});
 
-		describe('multiple aggregates', function() {
+		describe.skip('multiple aggregates', function() {
 
 			it('complex', function() {
 			});
