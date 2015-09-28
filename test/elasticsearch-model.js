@@ -1,6 +1,7 @@
 const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const { expect } = chai;
+const moment = require('moment');
 const XError = require('xerror');
 const { createSchema } = require('zs-common-schema');
 const { QueryValidationError } = require('zs-common-query');
@@ -546,29 +547,97 @@ describe('ElasticsearchModel', function() {
 
 	describe('#aggregateMulti', function() {
 
-		before(() => models.ShelteredAnimal.insertMulti([
-			//TODO: add a bunch of test animals to aggregate
-		]));
+		before(() => models.Animal.insertMulti([
+			{
+				animalId: 'charles-1',
+				name: 'Charles',
+				found: moment('2015-01-01', 'YYYY-MM-DD'),
+				age: 0
+			},
+			{
+				animalId: 'charles-2',
+				name: 'Charles',
+				found: moment('2015-01-05', 'YYYY-MM-DD'),
+				age: 1
+			},
+			{
+				animalId: 'baloo',
+				name: 'Baloo',
+				found: moment('2015-01-11', 'YYYY-MM-DD'),
+				age: 2
+			},
+			{
+				animalId: 'ein-1',
+				name: 'Ein',
+				found: moment('2015-02-01', 'YYYY-MM-DD'),
+				age: 3
+			},
+			{
+				animalId: 'ein-2',
+				name: 'Ein',
+				found: moment('2015-02-11', 'YYYY-MM-DD'),
+				age: 8
+			}
+		], {
+			index: 'uetest_aggregates',
+			consistency: 'quorum',
+			refresh: true
+		}));
 
-		describe('single aggregate', function() {
+		describe.only('single aggregate', function() {
 
-			it.only('stats', function() {
-				return models.ShelteredAnimal.aggregateMulti({}, [ {
+			it('stats', function() {
+				return models.Animal.aggregateMulti({}, [ {
 					stats: 'age'
-				} ]).then((aggr) => {
-					expect(aggr).to.deep.equal({
+				} ], { index: 'uetest_aggregates' }).then((aggr) => {
+					expect(aggr).to.deep.equal([ {
 						stats: {
 							age: {
 								count: 5
 							}
 						}
+					} ]);
+				});
+			});
+
+			it('total', function() {
+				return models.Animal.aggregateMulti({}, [ {
+					total: true
+				} ], { index: 'uetest_aggregates' }).then(([ aggr ]) => {
+					expect(aggr).to.deep.equal({
+						total: 5
 					});
 				});
 			});
 
-			it('total', function() {});
-
-			it('groupBy field', function() {});
+			it('groupBy field', function() {
+				return models.Animal.aggregateMulti({}, [ {
+					groupBy: 'name',
+					stats: 'age',
+					total: true
+				} ], { index: 'uetest_aggregates' }).then(([ aggr ]) => {
+					expect(aggr).to.be.instanceof(Array);
+					expect(aggr).to.have.length(3);
+					let expected = [
+						{
+							keys: [ 'charles' ],
+							stats: { age: { count: 2 } },
+							total: 2
+						},
+						{
+							keys: [ 'baloo' ],
+							stats: { age: { count: 1 } },
+							total: 1
+						},
+						{
+							keys: [ 'ein' ],
+							stats: { age: { count: 2 } },
+							total: 2
+						}
+					];
+					expect(aggr).to.deep.have.members(expected);
+				});
+			});
 
 			it('groupBy date range', function() {});
 

@@ -24,9 +24,12 @@ describe('Aggregates', function() {
 				}
 			}, { schema: models.ShelteredAnimal.getSchema() });
 			expect(convertAggregate(aggr)).to.deep.equal({
-				age: { // used to identify this stat
-					stats: {
-						field: 'age'
+				global: {},
+				aggregations: {
+					'|age': {
+						stats: {
+							field: 'age'
+						}
 					}
 				}
 			});
@@ -74,15 +77,12 @@ describe('Aggregates', function() {
 					}
 				]
 			}, { schema: models.ShelteredAnimal.getSchema() });
-			expect(convertAggregate(aggr)).to.deep.equal({
-				'group_0': { // Field
-					aggs: { age: { stats: { field: 'age' } } },
-					terms: {
-						field: 'name'
-					}
+			let actual = convertAggregate(aggr);
+			let expected = {
+				terms: {
+					field: 'name'
 				},
-				'group_1': { // Date Range
-					aggs: { age: { stats: { field: 'age' } } },
+				aggregations: {
 					'date_range': {
 						field: 'found',
 						ranges: [
@@ -91,47 +91,49 @@ describe('Aggregates', function() {
 							{ from: dateFeb.toISOString() }
 						],
 						format: 'YYYY-MM-DDTHH:mm:ss.sssZ'
-					}
-				},
-				'group_2': { // Numeric Range
-					aggs: { age: { stats: { field: 'age' } } },
-					range: {
-						field: 'age',
-						ranges: [
-							{ to: 2 },
-							{ from: 2, to: 5 },
-							{ from: 5 }
-						]
-					}
-				},
-				'group_3': { // Date Interval
-					aggs: { age: { stats: { field: 'age' } } },
-					'date_histogram': {
-						field: 'found',
-						interval: `${3600 * 24}s`, // One day
-						'extended_bounds': {
-							min: dateFeb.toISOString()
+					},
+					aggregations: {
+						range: {
+							field: 'age',
+							ranges: [
+								{ to: 2 },
+								{ from: 2, to: 5 },
+								{ from: 5 }
+							]
+						},
+						aggregations: {
+							'date_histogram': {
+								field: 'found',
+								interval: `${3600 * 24}s`, // One day
+								'extended_bounds': {
+									min: dateFeb.toISOString()
+								}
+							},
+							aggregations: {
+								histogram: {
+									field: 'age',
+									interval: 2,
+									'extended_bounds': {
+										min: 1
+									}
+								},
+								aggregations: {
+									'date_histogram': {
+										field: 'found',
+										interval: 'day'
+									},
+									aggregations: {
+										'|age': {
+											stats: { field: 'age' }
+										}
+									}
+								}
+							}
 						}
-					}
-				},
-				'group_4': { // Numeric Interval
-					aggs: { age: { stats: { field: 'age' } } },
-					histogram: {
-						field: 'age',
-						interval: 2,
-						'extended_bounds': {
-							min: 1
-						}
-					}
-				},
-				'group_5': { // Time Component
-					aggs: { age: { stats: { field: 'age' } } },
-					'date_histogram': {
-						field: 'found',
-						interval: 'day'
 					}
 				}
-			});
+			};
+			expect(actual).to.deep.equal(expected);
 		});
 
 	});
