@@ -705,12 +705,10 @@ describe('ElasticsearchModel', function() {
 			});
 
 			it('groupBy date interval', function() {
-				let dateFeb = moment.utc('2015-02-01', 'YYYY-MM-DD').toDate();
 				return models.Animal.aggregate({}, {
 					groupBy: { // Date Interval
 						field: 'found',
-						interval: 'P1M',
-						base: dateFeb
+						interval: 'P1M'
 					},
 					total: true
 				}, { index: 'uetest_aggregates' }).then((aggr) => {
@@ -737,8 +735,7 @@ describe('ElasticsearchModel', function() {
 				return models.Animal.aggregate({}, {
 					groupBy: { // Numeric Interval
 						field: 'age',
-						interval: 2,
-						base: 1
+						interval: 2
 					},
 					total: true
 				}, { index: 'uetest_aggregates' }).then((aggr) => {
@@ -820,13 +817,11 @@ describe('ElasticsearchModel', function() {
 						},
 						{ // Date Interval
 							field: 'found',
-							interval: 'P1M',
-							base: dateJan
+							interval: 'P1M'
 						},
 						{ // Numeric Interval
 							field: 'age',
-							interval: 2,
-							base: 1
+							interval: 2
 						},
 						{ // Time Component
 							field: 'found',

@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { createAggregate } = require('zs-common-query');
+const { createAggregate, AggregateValidationError } = require('zs-common-query');
 const moment = require('moment');
 
 const testUtils = require('./lib/test-utils');
@@ -63,13 +63,11 @@ describe('Aggregates', function() {
 					},
 					{ // Date Interval
 						field: 'found',
-						interval: 'P1D',
-						base: dateFeb
+						interval: 'P1D'
 					},
 					{ // Numeric Interval
 						field: 'age',
-						interval: 2,
-						base: 1
+						interval: 2
 					},
 					{ // Time Component
 						field: 'found',
@@ -108,20 +106,13 @@ describe('Aggregates', function() {
 									aggregate: {
 										'date_histogram': {
 											field: 'found',
-											interval: `${3600 * 24}s`, // One day
-											'extended_bounds': {
-												min: joda.toJodaFormat(dateFeb)
-											},
-											format: joda.JODA_ISO_STRING_FORMAT
+											interval: `${3600 * 24}s` // One day
 										},
 										aggregations: {
 											aggregate: {
 												histogram: {
 													field: 'age',
-													interval: 2,
-													'extended_bounds': {
-														min: 1
-													}
+													interval: 2
 												},
 												aggregations: {
 													aggregate: {
@@ -146,6 +137,18 @@ describe('Aggregates', function() {
 				}
 			};
 			expect(actual).to.deep.equal(expected);
+		});
+
+		it('should throw if base is provided for intervals', function() {
+			let aggregate = createAggregate({
+				groupBy: {
+					field: 'age',
+					interval: 2,
+					base: 1
+				}
+			}, models.Animal.getSchema());
+			expect(() => convertAggregate(aggregate))
+				.to.throw(AggregateValidationError, 'Interval base is not supported');
 		});
 
 	});
