@@ -4,6 +4,7 @@ const moment = require('moment');
 
 const testUtils = require('./lib/test-utils');
 const { convertAggregate, convertAggregateResult } = require('../lib/convert/aggregate');
+const joda = require('../lib/convert/joda');
 
 describe('Aggregates', function() {
 
@@ -83,48 +84,59 @@ describe('Aggregates', function() {
 					field: 'name'
 				},
 				aggregations: {
-					'date_range': {
-						field: 'found',
-						ranges: [
-							{ to: dateJan.toISOString() },
-							{ from: dateJan.toISOString(), to: dateFeb.toISOString() },
-							{ from: dateFeb.toISOString() }
-						],
-						format: 'YYYY-MM-DDTHH:mm:ss.sssZ'
-					},
-					aggregations: {
-						range: {
-							field: 'age',
+					aggregate: {
+						'date_range': {
+							field: 'found',
 							ranges: [
-								{ to: 2 },
-								{ from: 2, to: 5 },
-								{ from: 5 }
-							]
+								{ to: joda.toJodaFormat(dateJan) },
+								{ from: joda.toJodaFormat(dateJan), to: joda.toJodaFormat(dateFeb) },
+								{ from: joda.toJodaFormat(dateFeb) }
+							],
+							format: 'yyyy-MM-ddHH:mm:ss.SSS'
 						},
 						aggregations: {
-							'date_histogram': {
-								field: 'found',
-								interval: `${3600 * 24}s`, // One day
-								'extended_bounds': {
-									min: dateFeb.toISOString()
-								}
-							},
-							aggregations: {
-								histogram: {
+							aggregate: {
+								range: {
 									field: 'age',
-									interval: 2,
-									'extended_bounds': {
-										min: 1
-									}
+									ranges: [
+										{ to: 2 },
+										{ from: 2, to: 5 },
+										{ from: 5 }
+									]
 								},
 								aggregations: {
-									'date_histogram': {
-										field: 'found',
-										interval: 'day'
-									},
-									aggregations: {
-										'|age': {
-											stats: { field: 'age' }
+									aggregate: {
+										'date_histogram': {
+											field: 'found',
+											interval: `${3600 * 24}s`, // One day
+											'extended_bounds': {
+												min: joda.toJodaFormat(dateFeb)
+											},
+											format: joda.JODA_ISO_STRING_FORMAT
+										},
+										aggregations: {
+											aggregate: {
+												histogram: {
+													field: 'age',
+													interval: 2,
+													'extended_bounds': {
+														min: 1
+													}
+												},
+												aggregations: {
+													aggregate: {
+														'date_histogram': {
+															field: 'found',
+															interval: '2d'
+														},
+														aggregations: {
+															'|age': {
+																stats: { field: 'age' }
+															}
+														}
+													}
+												}
+											}
 										}
 									}
 								}

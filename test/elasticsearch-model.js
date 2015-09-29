@@ -551,31 +551,31 @@ describe('ElasticsearchModel', function() {
 			{
 				animalId: 'charles-1',
 				name: 'Charles',
-				found: moment('2015-01-01', 'YYYY-MM-DD'),
+				found: moment.utc('2015-01-01', 'YYYY-MM-DD').toDate(),
 				age: 0
 			},
 			{
 				animalId: 'charles-2',
 				name: 'Charles',
-				found: moment('2015-01-05', 'YYYY-MM-DD'),
+				found: moment.utc('2015-01-02', 'YYYY-MM-DD').toDate(),
 				age: 1
 			},
 			{
 				animalId: 'baloo',
 				name: 'Baloo',
-				found: moment('2015-01-11', 'YYYY-MM-DD'),
+				found: moment.utc('2015-01-11', 'YYYY-MM-DD').toDate(),
 				age: 2
 			},
 			{
 				animalId: 'ein-1',
 				name: 'Ein',
-				found: moment('2015-02-01', 'YYYY-MM-DD'),
+				found: moment.utc('2015-02-01', 'YYYY-MM-DD').toDate(),
 				age: 3
 			},
 			{
 				animalId: 'ein-2',
 				name: 'Ein',
-				found: moment('2015-02-11', 'YYYY-MM-DD'),
+				found: moment.utc('2015-02-11', 'YYYY-MM-DD').toDate(),
 				age: 8
 			}
 		], {
@@ -584,7 +584,7 @@ describe('ElasticsearchModel', function() {
 			refresh: true
 		}));
 
-		describe.only('single aggregate', function() {
+		describe('single aggregate', function() {
 
 			it('stats', function() {
 				return models.Animal.aggregate({}, {
@@ -653,7 +653,9 @@ describe('ElasticsearchModel', function() {
 					},
 					total: true
 				}, { index: 'uetest_aggregates' }).then((aggr) => {
-					expect(aggr).to.deep.equal([
+					expect(aggr).to.be.instanceof(Array);
+					expect(aggr).to.have.length(3);
+					expect(aggr).to.deep.include.members([
 						{
 							keys: [ 0 ],
 							total: 1
@@ -671,21 +673,274 @@ describe('ElasticsearchModel', function() {
 
 			});
 
-			it.skip('groupBy numeric range', function() {});
+			it('groupBy numeric range', function() {
+				return models.Animal.aggregate({}, {
+					groupBy: { // Numeric Range
+						field: 'age',
+						ranges: [
+							{ end: 2 },
+							{ start: 2, end: 5 },
+							{ start: 5 }
+						]
+					},
+					total: true
+				}, { index: 'uetest_aggregates' }).then((aggr) => {
+					expect(aggr).to.be.instanceof(Array);
+					expect(aggr).to.have.length(3);
+					expect(aggr).to.deep.include.members([
+						{
+							keys: [ 0 ],
+							total: 2
+						},
+						{
+							keys: [ 1 ],
+							total: 2
+						},
+						{
+							keys: [ 2 ],
+							total: 1
+						}
+					]);
+				});
+			});
 
-			it.skip('groupBy date interval', function() {});
+			it('groupBy date interval', function() {
+				let dateFeb = moment.utc('2015-02-01', 'YYYY-MM-DD').toDate();
+				return models.Animal.aggregate({}, {
+					groupBy: { // Date Interval
+						field: 'found',
+						interval: 'P1M',
+						base: dateFeb
+					},
+					total: true
+				}, { index: 'uetest_aggregates' }).then((aggr) => {
+					expect(aggr).to.be.instanceof(Array);
+					expect(aggr).to.have.length(3);
+					expect(aggr).to.deep.include.members([
+						{
+							keys: [ '2014-12-06T00:00:00.000Z' ],
+							total: 2
+						},
+						{
+							keys: [ '2015-01-05T00:00:00.000Z' ],
+							total: 2
+						},
+						{
+							keys: [ '2015-02-04T00:00:00.000Z' ],
+							total: 1
+						}
+					]);
+				});
+			});
 
-			it.skip('groupBy numeric interval', function() {});
+			it('groupBy numeric interval', function() {
+				return models.Animal.aggregate({}, {
+					groupBy: { // Numeric Interval
+						field: 'age',
+						interval: 2,
+						base: 1
+					},
+					total: true
+				}, { index: 'uetest_aggregates' }).then((aggr) => {
+					expect(aggr).to.be.instanceof(Array);
+					expect(aggr).to.have.length(3);
+					expect(aggr).to.deep.include.members([
+						{
+							keys: [ 0 ],
+							total: 2
+						},
+						{
+							keys: [ 2 ],
+							total: 2
+						},
+						{
+							keys: [ 8 ],
+							total: 1
+						}
+					]);
+				});
+			});
 
-			it.skip('groupBy time component', function() {});
+			it('groupBy time component', function() {
+				return models.Animal.aggregate({}, {
+					groupBy: { // Time Component
+						field: 'found',
+						timeComponent: 'day',
+						timeComponentCount: 2
+					},
+					total: true
+				}, { index: 'uetest_aggregates' }).then((aggr) => {
+					expect(aggr).to.be.instanceof(Array);
+					expect(aggr).to.have.length(4);
+					expect(aggr).to.deep.include.members([
+						{
+							keys: [ '2015-01-01T00:00:00.000Z' ],
+							total: 2
+						},
+						{
+							keys: [ '2015-01-11T00:00:00.000Z' ],
+							total: 1
+						},
+						{
+							keys: [ '2015-01-31T00:00:00.000Z' ],
+							total: 1
+						},
+						{
+							keys: [ '2015-02-10T00:00:00.000Z' ],
+							total: 1
+						}
+					]);
+				});
+			});
 
-			it.skip('complex', function() {});
+			it('complex', function() {
+				let dateJan = moment.utc('2015-01-01', 'YYYY-MM-DD').toDate();
+				let dateFeb = moment.utc('2015-02-01', 'YYYY-MM-DD').toDate();
+				let aggr = {
+					stats: 'age',
+					groupBy: [
+						{ // Terms
+							field: 'name'
+						},
+						{ // Date Range
+							field: 'found',
+							ranges: [
+								{ end: dateJan },
+								{ start: dateJan, end: dateFeb },
+								{ start: dateFeb }
+							]
+						},
+						{ // Numeric Range
+							field: 'age',
+							ranges: [
+								{ end: 2 },
+								{ start: 2, end: 5 },
+								{ start: 5 }
+							]
+						},
+						{ // Date Interval
+							field: 'found',
+							interval: 'P1M',
+							base: dateJan
+						},
+						{ // Numeric Interval
+							field: 'age',
+							interval: 2,
+							base: 1
+						},
+						{ // Time Component
+							field: 'found',
+							timeComponent: 'day',
+							timeComponentCount: 2
+						}
+					],
+					total: true
+				};
+				return models.Animal.aggregate({}, aggr, { index: 'uetest_aggregates' }).then((aggr) => {
+					expect(aggr).to.be.instanceof(Array);
+					expect(aggr).to.have.length(4);
+					expect(aggr).to.deep.include.members([
+						{
+							keys: [ 'charles', 1, 0, '2014-12-06T00:00:00.000Z', 0, '2015-01-01T00:00:00.000Z' ],
+							stats: {
+								age: { count: 2 }
+							},
+							total: 2
+						},
+						{
+							keys: [ 'ein', 2, 1, '2015-01-05T00:00:00.000Z', 2, '2015-01-31T00:00:00.000Z' ],
+							stats: {
+								age: { count: 1 }
+							},
+							total: 1
+						},
+						{
+							keys: [ 'ein', 2, 2, '2015-02-04T00:00:00.000Z', 8, '2015-02-10T00:00:00.000Z' ],
+							stats: {
+								age: { count: 1 }
+							},
+							total: 1
+						},
+						{
+							keys: [ 'baloo', 1, 1, '2015-01-05T00:00:00.000Z', 2, '2015-01-11T00:00:00.000Z' ],
+							stats: {
+								age: { count: 1 }
+							},
+							total: 1
+						}
+					]);
+				});
+			});
 
 		});
 
-		describe.skip('multiple aggregates', function() {
+		describe('multiple aggregates', function() {
 
 			it('complex', function() {
+				return models.Animal.aggregateMulti({}, {
+					stats: {
+						stats: 'age'
+					},
+					field: {
+						groupBy: 'name',
+						total: true
+					},
+					multi: {
+						groupBy: [
+							'name',
+							{
+								field: 'age',
+								ranges: [
+									{ end: 2 },
+									{ start: 2, end: 5 },
+									{ start: 5 }
+								]
+							}
+						],
+						total: true
+					}
+				}, { index: 'uetest_aggregates' }).then((aggrs) => {
+					console.log(JSON.stringify(aggrs, null, 2));
+					expect(aggrs.stats).to.deep.equal({
+						stats: {
+							age: {
+								count: 5
+							}
+						}
+					});
+					expect(aggrs.field).to.deep.include.members([
+						{
+							keys: [ 'charles' ],
+							total: 2
+						},
+						{
+							keys: [ 'baloo' ],
+							total: 1
+						},
+						{
+							keys: [ 'ein' ],
+							total: 2
+						}
+					]);
+					expect(aggrs.multi).to.deep.include.members([
+						{
+							keys: [ 'charles', 0 ],
+							total: 2
+						},
+						{
+							keys: [ 'baloo', 1 ],
+							total: 1
+						},
+						{
+							keys: [ 'ein', 1 ],
+							total: 1
+						},
+						{
+							keys: [ 'ein', 2 ],
+							total: 1
+						}
+					]);
+				});
 			});
 
 		});
