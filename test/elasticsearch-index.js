@@ -29,14 +29,6 @@ const EX_WARMER = {
 	}
 };
 
-const EX_ALIAS = {
-	filter: {
-		term: {
-			year: 2014
-		}
-	}
-};
-
 describe('ElasticsearchIndex', function() {
 
 	let dogIndex;
@@ -66,21 +58,6 @@ describe('ElasticsearchIndex', function() {
 				.then((response) => {
 					let warmer = response[index.getName()].warmers.getting_hot;
 					expect(warmer).to.deep.equal(EX_WARMER);
-				});
-		});
-
-		it('should initialize a new index with aliases', function() {
-			let index = makeIndex({
-				aliases: {
-					'a_name': EX_ALIAS
-				}
-			});
-			return index.indexWaiter.promise
-				.then(() => testUtils.getConnection().getClient())
-				.then((client) => client.indices.getAlias({ index: index.getName(), name: 'a_name' }))
-				.then((response) => {
-					let alias = response[index.getName()].aliases.a_name;
-					expect(alias).to.deep.equal(EX_ALIAS);
 				});
 		});
 
@@ -116,25 +93,6 @@ describe('ElasticsearchIndex', function() {
 				.then((response) => {
 					let warmer = response[index.getName()].warmers.getting_hot;
 					expect(warmer).to.deep.equal(EX_WARMER);
-				});
-		});
-
-		it('should initialize an existing index with aliases', function() {
-			let index = makeIndex();
-			return index.indexWaiter.promise
-				.then(() => {
-					let existingIndex = makeIndex({
-						aliases: {
-							'a_name': EX_ALIAS
-						}
-					}, index.getName());
-					return existingIndex.indexWaiter.promise;
-				})
-				.then(() => testUtils.getConnection().getClient())
-				.then((client) => client.indices.getAlias({ index: index.getName(), name: 'a_name' }))
-				.then((response) => {
-					let alias = response[index.getName()].aliases.a_name;
-					expect(alias).to.deep.equal(EX_ALIAS);
 				});
 		});
 
