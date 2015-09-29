@@ -900,7 +900,6 @@ describe('ElasticsearchModel', function() {
 						total: true
 					}
 				}, { index: 'uetest_aggregates' }).then((aggrs) => {
-					console.log(JSON.stringify(aggrs, null, 2));
 					expect(aggrs.stats).to.deep.equal({
 						stats: {
 							age: {

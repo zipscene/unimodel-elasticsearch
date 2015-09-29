@@ -150,10 +150,133 @@ describe('Aggregates', function() {
 
 	});
 
-	describe.skip('Aggregate Result Conversion', function() {
+	describe('Aggregate Result Conversion', function() {
 
-		it('should convert basic aggregate results', function() {
+		it('should convert aggregate results', function() {
+			let aggregate = createAggregate({
+				groupBy: [
+					'name',
+					{
+						field: 'age',
+						ranges: [
+							{ end: 2 },
+							{ start: 2, end: 5 },
+							{ start: 5 }
+						]
+					}
+				],
+				total: true
+			}, models.Animal.getSchema());
+			let aggrResult = {
+				'buckets': [
+					{
+						'key': 'charles',
+						'doc_count': 2,
+						'aggregate': {
+							'buckets': [
+								{
+									'key': '*-2.0',
+									'to': 2,
+									'to_as_string': '2.0',
+									'doc_count': 2
+								},
+								{
+									'key': '2.0-5.0',
+									'from': 2,
+									'from_as_string': '2.0',
+									'to': 5,
+									'to_as_string': '5.0',
+									'doc_count': 0
+								},
+								{
+									'key': '5.0-*',
+									'from': 5,
+									'from_as_string': '5.0',
+									'doc_count': 0
+								}
+							]
+						}
+					},
+					{
+						'key': 'ein',
+						'doc_count': 2,
+						'aggregate': {
+							'buckets': [
+								{
+									'key': '*-2.0',
+									'to': 2,
+									'to_as_string': '2.0',
+									'doc_count': 0
+								},
+								{
+									'key': '2.0-5.0',
+									'from': 2,
+									'from_as_string': '2.0',
+									'to': 5,
+									'to_as_string': '5.0',
+									'doc_count': 1
+								},
+								{
+									'key': '5.0-*',
+									'from': 5,
+									'from_as_string': '5.0',
+									'doc_count': 1
+								}
+							]
+						}
+					},
+					{
+						'key': 'baloo',
+						'doc_count': 1,
+						'aggregate': {
+							'buckets': [
+								{
+									'key': '*-2.0',
+									'to': 2,
+									'to_as_string': '2.0',
+									'doc_count': 0
+								},
+								{
+									'key': '2.0-5.0',
+									'from': 2,
+									'from_as_string': '2.0',
+									'to': 5,
+									'to_as_string': '5.0',
+									'doc_count': 1
+								},
+								{
+									'key': '5.0-*',
+									'from': 5,
+									'from_as_string': '5.0',
+									'doc_count': 0
+								}
+							]
+						}
+					}
+				]
+			};
 
+			let commonResult = convertAggregateResult(aggrResult, aggregate);
+			expect(commonResult).to.be.instanceof(Array);
+			expect(commonResult).to.have.length(4);
+			expect(commonResult).to.deep.include.members([
+				{
+					keys: [ 'charles', 0 ],
+					total: 2
+				},
+				{
+					keys: [ 'baloo', 1 ],
+					total: 1
+				},
+				{
+					keys: [ 'ein', 1 ],
+					total: 1
+				},
+				{
+					keys: [ 'ein', 2 ],
+					total: 1
+				}
+			]);
 		});
 
 	});
