@@ -5,7 +5,13 @@ const testUtils = require('./lib/test-utils');
 describe('ElasticsearchConnection', function() {
 
 	let conn;
-	before(() => testUtils.resetAndConnect().then((conn_) => conn = conn_));
+	before(function() {
+		this.timeout(0);
+		return testUtils.resetAndConnect()
+			.then((conn_) => {
+				conn = conn_;
+			});
+	});
 
 	describe('request', function() {
 

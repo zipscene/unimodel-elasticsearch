@@ -22,7 +22,8 @@ function makePerson(initialize = true, keys) {
 describe('ElasticsearchModel', function() {
 
 	let models;
-	before(() => {
+	before(function() {
+		this.timeout(0);
 		return testUtils.resetAndConnect()
 			.then(() => {
 				models = testUtils.createTestModels();

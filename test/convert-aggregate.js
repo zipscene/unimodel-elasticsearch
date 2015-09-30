@@ -9,10 +9,13 @@ const joda = require('../lib/convert/joda');
 describe('Aggregates', function() {
 
 	let models;
-	before(() => testUtils.resetAndConnect()
-		.then(() => {
-			models = testUtils.createTestModels();
-		}));
+	before(function() {
+		this.timeout(0);
+		return testUtils.resetAndConnect()
+			.then(() => {
+				models = testUtils.createTestModels();
+			});
+	});
 
 	describe('Aggregate Conversion', function() {
 

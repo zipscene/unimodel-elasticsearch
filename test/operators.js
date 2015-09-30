@@ -11,10 +11,13 @@ queryFactory.registerQueryOperator('$child', new QueryOperatorChild());
 describe('Query Operator', function() {
 
 	let models;
-	before(() => testUtils.resetAndConnect()
-		.then(() => {
-			models = testUtils.createTestModels();
-		}));
+	before(function() {
+		this.timeout(0);
+		return testUtils.resetAndConnect()
+			.then(() => {
+				models = testUtils.createTestModels();
+			});
+	});
 
 	describe('$parent', function() {
 		it('takes valid related queries', function() {

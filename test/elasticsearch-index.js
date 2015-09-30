@@ -32,9 +32,12 @@ const EX_WARMER = {
 describe('ElasticsearchIndex', function() {
 
 	let dogIndex;
-	before(() => testUtils.resetAndConnect().then(() => {
-		dogIndex = new ElasticsearchIndex('uetest_dog', testUtils.getConnection(), testUtils.getConfig());
-	}));
+	before(function() {
+		this.timeout(0);
+		return testUtils.resetAndConnect().then(() => {
+			dogIndex = new ElasticsearchIndex('uetest_dog', testUtils.getConnection(), testUtils.getConfig());
+		});
+	});
 
 	describe('#initialize', function() {
 
