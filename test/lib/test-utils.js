@@ -14,7 +14,7 @@ const testConfig = {
 			replicas: 2
 		}
 	},
-	allTestIndexes: 'uetest_*'
+	allTestIndexes: [ 'uetest_*', 'uitest_*' ]
 };
 function getConfig() {
 	return testConfig;
@@ -41,7 +41,10 @@ function resetData() {
 		return Promise.resolve();
 	}
 	return testConnection.getClient()
-		.then((client) => client.indices.delete({ index: testConfig.allTestIndexes }))
+		.then((client) => Promise.all([
+			client.indices.delete({ index: testConfig.allTestIndexes[0] }),
+			client.indices.delete({ index: testConfig.allTestIndexes[1] })
+		]))
 		.catch((err) => {
 			if (err.code === XError.NOT_FOUND) { return Promise.resolve(); }
 			return Promise.reject(err);
@@ -85,7 +88,9 @@ function createTestModels() {
 				elements: {
 					bedId: { type: String, index: true }
 				}
-			}
+			},
+			age: Number,
+			found: Date
 		}, 'uetest_animals', testConnection),
 
 		ShelteredAnimal: new ElasticsearchModel('ShelteredAnimal', {

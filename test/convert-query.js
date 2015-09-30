@@ -8,10 +8,13 @@ const testUtils = require('./lib/test-utils');
 describe('convertQuery', function() {
 
 	let models;
-	before(() => testUtils.resetAndConnect()
-		.then(() => {
-			models = testUtils.createTestModels();
-		}));
+	before(function() {
+		this.timeout(0);
+		return testUtils.resetAndConnect()
+			.then(() => {
+				models = testUtils.createTestModels();
+			});
+	});
 
 	describe('query expressions', function() {
 

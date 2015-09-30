@@ -12,7 +12,10 @@ function makeIndexManager() {
 
 describe('ElasticsearchIndexManager', function() {
 
-	before(testUtils.resetAndConnect);
+	before(function() {
+		this.timeout(0);
+		return testUtils.resetAndConnect();
+	});
 
 	describe('#getIndex', function() {
 
