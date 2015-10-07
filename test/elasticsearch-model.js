@@ -7,7 +7,12 @@ const { createSchema } = require('zs-common-schema');
 const { QueryValidationError } = require('zs-common-query');
 
 const testUtils = require('./lib/test-utils');
-const { ElasticsearchModel, ElasticsearchIndex, ElasticsearchDocument } = require('../lib');
+const {
+	ElasticsearchModel,
+	ElasticsearchIndex,
+	ElasticsearchDocument,
+	ElasticsearchError
+} = require('../lib');
 
 let idxItr = 0;
 function makePerson(initialize = true, keys) {
@@ -940,6 +945,12 @@ describe('ElasticsearchModel', function() {
 
 		});
 
+	});
+
+	it('should not allow creation of child types without a parent', function() {
+		let shelterless = models.ShelteredAnimal.create({ animalId: 'shelterless!!' });
+		return expect(shelterless.save())
+			.to.be.rejectedWith(ElasticsearchError, 'Parent ID is required for child models.');
 	});
 
 });
