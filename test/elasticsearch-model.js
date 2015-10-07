@@ -7,7 +7,12 @@ const { createSchema } = require('zs-common-schema');
 const { QueryValidationError } = require('zs-common-query');
 
 const testUtils = require('./lib/test-utils');
-const { ElasticsearchModel, ElasticsearchIndex, ElasticsearchDocument } = require('../lib');
+const {
+	ElasticsearchModel,
+	ElasticsearchIndex,
+	ElasticsearchDocument,
+	ElasticsearchError
+} = require('../lib');
 
 let idxItr = 0;
 function makePerson(initialize = true, keys) {

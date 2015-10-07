@@ -100,14 +100,6 @@ describe('ElasticsearchDocument', function() {
 			});
 	});
 
-	it('should fail to create child objects that require parents', function() {
-		let shelterlessDog = models.ShelteredAnimal.create({
-			animalId: 'shelterless-dog'
-		});
-		return expect(shelterlessDog.save())
-			.to.be.rejectedWith(XError, /Parent ID is required for child models/);
-	});
-
 	it('should fail to delete child objects without originalData', function() {
 		let dog = models.Animal.create({
 			animalId: 'dog-charles-barkley-male',
@@ -134,11 +126,7 @@ describe('ElasticsearchDocument', function() {
 			});
 	});
 
-	it('should fail to delete if no parent ID is provided', function() {
-		let shelter = models.Shelter.create({
-			shelterId: 'opes-farm',
-			name: 'Ope\'s Farm'
-		});
+	it('should succeed in saving and deleting models with no parent ID is provided', function() {
 		let baloo = models.ShelteredAnimal.create({
 			animalId: 'opes-farm-dog-baloo',
 			name: 'Baloo',
@@ -146,16 +134,7 @@ describe('ElasticsearchDocument', function() {
 			description: 'A big slobery dog',
 			found: new Date('2012-09-04T17:00:00.000Z')
 		});
-		return shelter.save()
-			.then(() => {
-				baloo.setParentId(shelter.getInternalId());
-				return baloo.save();
-			})
-			.then(() => {
-				baloo.setParentId(null);
-				return expect(baloo.remove())
-					.to.be.rejectedWith(XError, /Parent ID is required for removing child models./);
-			});
+		return baloo.save().then(() => baloo.remove());
 	});
 
 	it('should fail to save with invalid "consistency" argument', function() {
