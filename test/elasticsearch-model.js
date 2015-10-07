@@ -947,10 +947,4 @@ describe('ElasticsearchModel', function() {
 
 	});
 
-	it('should not allow creation of child types without a parent', function() {
-		let shelterless = models.ShelteredAnimal.create({ animalId: 'shelterless!!' });
-		return expect(shelterless.save())
-			.to.be.rejectedWith(ElasticsearchError, 'Parent ID is required for child models.');
-	});
-
 });
