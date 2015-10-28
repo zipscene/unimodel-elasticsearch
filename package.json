@@ -1,6 +1,6 @@
 {
   "name": "zs-unimodel-elasticsearch",
-  "version": "0.1.2",
+  "version": "1.0.1",
   "description": "Unimodel library for ElasticSearch",
   "main": "./dist/lib/index.js",
   "repository": {
