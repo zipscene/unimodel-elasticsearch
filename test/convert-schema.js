@@ -367,6 +367,35 @@ describe('convertSchema', function() {
 
 	});
 
+	describe('type: map', function() {
+
+		it('should convert map schema types when indexed', function() {
+			let schema = createSchema({
+				foo: {
+					type: 'map',
+					values: {
+						bar: String,
+						baz: { type: String, index: true }
+					}
+				}
+			});
+			let mapping = convertSchema(schema);
+			let expected = {
+				properties: {
+					foo: {
+						type: 'object',
+						dynamic: true
+					}
+				},
+				_all: {
+					enabled: false
+				}
+			};
+			expect(mapping).to.deep.equals(expected);
+		});
+
+	});
+
 	describe('type: object', function() {
 
 		it('should convert object schema types', function() {
@@ -426,18 +455,6 @@ describe('convertSchema', function() {
 
 	});
 
-	describe('type: map', function() {
-
-		it('should should always throw an error', function() {
-			let schema = createSchema({
-				foo: map({}, Number)
-			});
-			expect(() => convertSchema(schema))
-				.to.throw(ElasticsearchMappingValidationError, /Invalid schema type provided: map/);
-		});
-
-	});
-
 	describe('type: or', function() {
 
 		it('should should always throw an error', function() {
@@ -472,7 +489,7 @@ describe('convertSchema', function() {
 			expect(mapping).to.deep.equals(expected);
 		});
 
-		it('should convert unindexed or scheam types', function() {
+		it('should convert unindexed or schema types', function() {
 			let schema = createSchema({
 				foo: Mixed
 			});
