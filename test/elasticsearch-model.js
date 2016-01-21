@@ -4,7 +4,7 @@ const { expect } = chai;
 const moment = require('moment');
 const XError = require('xerror');
 const { createSchema } = require('zs-common-schema');
-const { QueryValidationError } = require('zs-common-query');
+const { QueryValidationError, createQuery } = require('zs-common-query');
 
 const testUtils = require('./lib/test-utils');
 const {
@@ -38,7 +38,8 @@ describe('ElasticsearchModel', function() {
 					name: 'Charles Barkley',
 					isDog: true,
 					sex: 'male',
-					description: 'A little asshole.'
+					description: 'A little asshole.',
+					loc: [ 64, 56 ]
 				}, { routing: 'Charles' });
 
 				let baloo = models.Animal.create({
@@ -46,7 +47,8 @@ describe('ElasticsearchModel', function() {
 					name: 'Baloo',
 					isDog: true,
 					sex: 'male',
-					description: 'What is a data dog, anyway?'
+					description: 'What is a data dog, anyway?',
+					loc: [ 75, 67 ]
 				}, { routing: 'Baloo' });
 
 				let ein = models.Animal.create({
@@ -54,7 +56,8 @@ describe('ElasticsearchModel', function() {
 					name: 'Ein',
 					isDog: false,
 					sex: 'female',
-					description: 'A little asshole.'
+					description: 'A little asshole.',
+					loc: [ 84, 39 ]
 				}, { routing: 'Ein' });
 
 				return Promise.all([
@@ -210,6 +213,31 @@ describe('ElasticsearchModel', function() {
 				for (let animal of docs) {
 					expect(animal).to.be.instanceof(ElasticsearchDocument);
 					expect(animal.getData().isDog).to.be.true;
+				}
+			});
+		});
+
+		it('should find all documents close to a location and order them by distance', function() {
+			let query = {
+				loc: {
+					$near: {
+						$geometry: {
+							type: 'Point',
+							coordinates: [ 84, 39 ]
+						},
+						$maxDistance: 6731000
+					}
+				}
+			};
+			let commonQuery = createQuery(query);
+			return models.Animal.find(query).then((docs) => {
+				expect(docs).to.have.length(3);
+				let previousDistance = 0;
+				let currentDistance;
+				for (let animal of docs) {
+					commonQuery.matches(animal.getData());
+					currentDistance = commonQuery.getMatchProperty('distance');
+					expect(currentDistance).to.be.at.least(previousDistance);
 				}
 			});
 		});
