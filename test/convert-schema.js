@@ -435,7 +435,7 @@ describe('convertSchema', function() {
 
 	describe('type: array', function() {
 
-		it('should convert array schema types', function() {
+		it('should convert unindexed array schema types', function() {
 			let schema = createSchema({
 				foo: [ String ]
 			});
@@ -446,6 +446,51 @@ describe('convertSchema', function() {
 					foo: {
 						type: 'string',
 						index: 'no',
+						null_value: undefined //eslint-disable-line camelcase
+					}
+				}
+			};
+			expect(mapping).to.deep.equals(expected);
+		});
+
+		it('should convert indexed array schema types', function() {
+			let schema = createSchema({
+				foo: {
+					type: [ String ],
+					index: true
+				}
+			});
+			let mapping = convertSchema(schema);
+			let expected = {
+				_all: { enabled: false },
+				properties: {
+					foo: {
+						type: 'string',
+						index: 'not_analyzed',
+						null_value: undefined //eslint-disable-line camelcase
+					}
+				}
+			};
+			expect(mapping).to.deep.equals(expected);
+		});
+
+		it('should convert indexed elements property in schema type', function() {
+			let schema = createSchema({
+				foo: {
+					type: 'array',
+					elements: {
+						type: 'string',
+						index: true
+					}
+				}
+			});
+			let mapping = convertSchema(schema);
+			let expected = {
+				_all: { enabled: false },
+				properties: {
+					foo: {
+						type: 'string',
+						index: 'not_analyzed',
 						null_value: undefined //eslint-disable-line camelcase
 					}
 				}
