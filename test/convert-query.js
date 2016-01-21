@@ -391,9 +391,13 @@ describe('convertQuery', function() {
 				}
 			});
 			expect(convertQuery(query, models.Animal)).to.deep.equal({
-				'geo_distance': {
-					distance: '' + 5 + 'm',
-					loc: [ 0.5, 1.3 ]
+				filtered: {
+					filter: {
+						'geo_distance': {
+							distance: '' + 5 + 'm',
+							loc: [ 0.5, 1.3 ]
+						}
+					}
 				}
 			});
 		});
