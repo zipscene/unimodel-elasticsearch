@@ -1,6 +1,10 @@
+const http = require('http');
 const { expect } = require('chai');
 
+const ElasticsearchConnection = require('../lib/elasticsearch-connection');
 const testUtils = require('./lib/test-utils');
+
+const proxyPort = 9201;
 
 describe('ElasticsearchConnection', function() {
 
@@ -23,6 +27,33 @@ describe('ElasticsearchConnection', function() {
 				body = JSON.parse(body);
 				expect(body.status).to.equal(200);
 			});
+		});
+
+		// skip by default as this test is slooow
+		it.skip('should not timeout w/ a slow connection', function() {
+			this.timeout(0);
+
+			let { indexConfigs } = testUtils.getConfig();
+			let hostConfig = { host: `http://localhost:${ proxyPort }` };
+			let slowConnection = new ElasticsearchConnection(hostConfig, indexConfigs);
+
+			let server = http.createServer((req, res) => {
+				return setTimeout(() => {
+					res.write(JSON.stringify({ status: 200 }));
+					res.end();
+				}, 30000);
+			});
+
+			let serverPromise = new Promise((resolve, reject) => {
+				server.listen(proxyPort, (err) => (err ? reject(err) : resolve()));
+			});
+
+			return Promise.all([ serverPromise, slowConnection.connectionWaiter.promise ])
+				.then(() => slowConnection.request({ method: 'GET', path: '/' }))
+				.then((body) => {
+					body = JSON.parse(body);
+					expect(body.status).to.equal(200);
+				});
 		});
 
 	});
