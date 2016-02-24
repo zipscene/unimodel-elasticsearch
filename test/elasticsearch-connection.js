@@ -29,19 +29,21 @@ describe('ElasticsearchConnection', function() {
 			});
 		});
 
-		// skip by default as this test is slooow
-		it.skip('should not timeout w/ a slow connection', function() {
+		it('should not timeout w/ a slow connection', function() {
 			this.timeout(0);
 
 			let { indexConfigs } = testUtils.getConfig();
-			let hostConfig = { host: `http://localhost:${ proxyPort }` };
+			let hostConfig = {
+				host: `http://localhost:${ proxyPort }`,
+				requestTimeout: 1000
+			};
 			let slowConnection = new ElasticsearchConnection(hostConfig, indexConfigs);
 
 			let server = http.createServer((req, res) => {
 				return setTimeout(() => {
 					res.write(JSON.stringify({ status: 200 }));
 					res.end();
-				}, 30000);
+				}, 950);
 			});
 
 			let serverPromise = new Promise((resolve, reject) => {
