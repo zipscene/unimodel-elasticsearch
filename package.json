@@ -1,6 +1,6 @@
 {
   "name": "zs-unimodel-elasticsearch",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Unimodel library for ElasticSearch",
   "main": "./dist/lib/index.js",
   "repository": {
@@ -23,11 +23,11 @@
     "moment": "^2.10.6",
     "pasync": "^1.4.0",
     "xerror": "^1.0.0",
-    "zs-common-query": "^1.6.1",
-    "zs-common-schema": "^1.7.2",
-    "zs-objtools": "^1.3.0",
-    "zs-simple-profiler": "^1.2.4",
-    "zs-unimodel": "^0.5.25",
+    "zs-common-query": "^1.9.4",
+    "zs-common-schema": "^1.7.7",
+    "zs-objtools": "^1.4.0",
+    "zs-simple-profiler": "^1.2.5",
+    "zs-unimodel": "^0.6.4",
     "zstreams": "^3.2.2"
   },
   "devDependencies": {
