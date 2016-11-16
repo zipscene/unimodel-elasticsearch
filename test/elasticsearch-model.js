@@ -1,10 +1,14 @@
+// Copyright 2016 Zipscene, LLC
+// Licensed under the Apache License, Version 2.0
+// http://www.apache.org/licenses/LICENSE-2.0
+
 const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const { expect } = chai;
 const moment = require('moment');
 const XError = require('xerror');
-const { createSchema } = require('zs-common-schema');
-const { QueryValidationError, createQuery } = require('zs-common-query');
+const { createSchema } = require('common-schema');
+const { QueryValidationError, createQuery } = require('common-query');
 
 const testUtils = require('./lib/test-utils');
 const {

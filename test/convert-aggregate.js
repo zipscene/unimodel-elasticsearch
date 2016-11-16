@@ -1,5 +1,9 @@
+// Copyright 2016 Zipscene, LLC
+// Licensed under the Apache License, Version 2.0
+// http://www.apache.org/licenses/LICENSE-2.0
+
 const { expect } = require('chai');
-const { createAggregate, AggregateValidationError } = require('zs-common-query');
+const { createAggregate, AggregateValidationError } = require('common-query');
 const moment = require('moment');
 
 const testUtils = require('./lib/test-utils');

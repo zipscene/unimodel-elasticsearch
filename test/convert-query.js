@@ -1,5 +1,9 @@
+// Copyright 2016 Zipscene, LLC
+// Licensed under the Apache License, Version 2.0
+// http://www.apache.org/licenses/LICENSE-2.0
+
 const { expect } = require('chai');
-const { QueryValidationError } = require('zs-common-query');
+const { QueryValidationError } = require('common-query');
 
 const { createQuery } = require('../lib/common-query');
 const { convertQuery } = require('../lib/convert/query');

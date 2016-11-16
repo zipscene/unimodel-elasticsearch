@@ -1,5 +1,5 @@
 {
-	"name": "zs-unimodel-elasticsearch",
+	"name": "unimodel-elasticsearch",
 	"description": "Unimodel library for ElasticSearch",
 	"options": {
 		"outdir": "./docs",

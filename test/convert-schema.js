@@ -1,4 +1,8 @@
-const { createSchema, map, or, Mixed } = require('zs-common-schema');
+// Copyright 2016 Zipscene, LLC
+// Licensed under the Apache License, Version 2.0
+// http://www.apache.org/licenses/LICENSE-2.0
+
+const { createSchema, map, or, Mixed } = require('common-schema');
 const { expect } = require('chai');
 
 const { convertSchema } = require('../lib/convert/schema');

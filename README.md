@@ -1,11 +1,11 @@
-# zs-unimodel-elasticsearch
+# unimodel-elasticsearch
 
 Unimodel library for ElasticSearch.
 
 ## Installation
 
 ```shell
-$ npm install --save zs-unimodel-elasticsearch
+$ npm install --save unimodel-elasticsearch
 ```
 
 ## Basic Usage
@@ -14,7 +14,7 @@ In this section, we will walk through basic usage for the library.
 
 Initiate the default connection to elasticsearch:
 ```js
-let es = require('zs-unimodel-elasticsearch');
+let es = require('unimodel-elasticsearch');
 es.connect('http://localhost:9200', {
   'warehouse_*': { // index settings for any index matching warehouse_*
     shards: 16,
